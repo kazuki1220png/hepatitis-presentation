@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B型肝炎・C型肝炎について - 安定版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background: #1a1a1a;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #f0f2f5;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+        
+        .slide.active {
+            opacity: 1;
+        }
+        
+        /* スライド1: タイトル */
+        .slide-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .slide-1 h1 {
+            font-size: 4em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .slide-1 .subtitle {
+            font-size: 1.8em;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+        
+        /* スライド2: 統計 */
+        .slide-2 {
+            background: white;
+        }
+        
+        .slide-2 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            width: 80%;
+            max-width: 800px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .stat-number {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        /* スライド3: 比較表 */
+        .slide-3 {
+            background: white;
+        }
+        
+        .slide-3 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .comparison-table {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+        }
+        
+        .comparison-header {
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .comparison-cell {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        
+        /* スライド4: 感染経路 */
+        .slide-4 {
+            background: white;
+        }
+        
+        .slide-4 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .routes-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            width: 80%;
+            max-width: 900px;
+        }
+        
+        .route-card {
+            background: #f8f9fa;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .route-card h3 {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .route-card ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .route-card li {
+            padding: 10px 0;
+            position: relative;
+        }
+        
+        .route-card li:before {
+            content: "▶";
+            position: absolute;
+            left: -20px;
+            color: #667eea;
+        }
+        
+        /* スライド5: 治療法 */
+        .slide-5 {
+            background: white;
+        }
+        
+        .slide-5 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .treatment-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            width: 80%;
+            max-width: 900px;
+        }
+        
+        .treatment-card {
+            background: #f8f9fa;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .treatment-card h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        
+        .b-treatment h3 {
+            color: #e74c3c;
+        }
+        
+        .c-treatment h3 {
+            color: #3498db;
+        }
+        
+        .success-rate {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #27ae60;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        /* スライド6: 予防対策 */
+        .slide-6 {
+            background: white;
+        }
+        
+        .slide-6 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .prevention-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+        }
+        
+        .prevention-item {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .prevention-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        /* スライド7: まとめ */
+        .slide-7 {
+            background: white;
+        }
+        
+        .slide-7 h2 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            width: 90%;
+            max-width: 1000px;
+        }
+        
+        .summary-card {
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        
+        .summary-1 {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .summary-2 {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .summary-3 {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        /* コントロールパネル */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            z-index: 1000;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #764ba2;
+        }
+        
+        .slide-indicator {
+            color: white;
+            margin: 0 10px;
+        }
+        
+        /* デバッグ情報 */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- スライド1: タイトル -->
+        <div class="slide slide-1 active" data-slide="1">
+            <h1>B型肝炎・C型肝炎について</h1>
+            <p class="subtitle">正しい知識と最新の治療情報</p>
+            <p style="font-size: 1.2em; opacity: 0.8;">2025年4月</p>
+        </div>
+        
+        <!-- スライド2: 統計 -->
+        <div class="slide slide-2" data-slide="2">
+            <h2>世界と日本の感染者数</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">3億人</div>
+                    <div>世界のB型肝炎感染者</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">110-140万人</div>
+                    <div>日本のB型肝炎感染者</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1.7億人</div>
+                    <div>世界のC型肝炎感染者</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">90-130万人</div>
+                    <div>日本のC型肝炎感染者</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スライド3: 比較表 -->
+        <div class="slide slide-3" data-slide="3">
+            <h2>B型肝炎とC型肝炎の違い</h2>
+            <div class="comparison-table">
+                <div class="comparison-header">項目</div>
+                <div class="comparison-header" style="background: #e74c3c;">B型肝炎</div>
+                <div class="comparison-header" style="background: #3498db;">C型肝炎</div>
+                
+                <div class="comparison-cell">原因ウイルス</div>
+                <div class="comparison-cell">HBV (DNA)</div>
+                <div class="comparison-cell">HCV (RNA)</div>
+                
+                <div class="comparison-cell">慢性化率</div>
+                <div class="comparison-cell">約5%</div>
+                <div class="comparison-cell">約70%</div>
+                
+                <div class="comparison-cell">完治の可能性</div>
+                <div class="comparison-cell">困難</div>
+                <div class="comparison-cell">95%以上</div>
+            </div>
+        </div>
+        
+        <!-- スライド4: 感染経路 -->
+        <div class="slide slide-4" data-slide="4">
+            <h2>主な感染経路</h2>
+            <div class="routes-container">
+                <div class="route-card">
+                    <h3>B型肝炎</h3>
+                    <ul>
+                        <li>母子感染</li>
+                        <li>性的接触</li>
+                        <li>血液を介した感染</li>
+                        <li>医療行為</li>
+                    </ul>
+                </div>
+                <div class="route-card">
+                    <h3>C型肝炎</h3>
+                    <ul>
+                        <li>過去の輸血・血液製剤</li>
+                        <li>注射針の共用</li>
+                        <li>不適切な刺青・ピアス</li>
+                        <li>針刺し事故</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スライド5: 治療法 -->
+        <div class="slide slide-5" data-slide="5">
+            <h2>最新の治療法</h2>
+            <div class="treatment-container">
+                <div class="treatment-card b-treatment">
+                    <h3>B型肝炎の治療</h3>
+                    <ul>
+                        <li>核酸アナログ製剤</li>
+                        <li>インターフェロン療法</li>
+                        <li>継続的な治療が必要</li>
+                    </ul>
+                </div>
+                <div class="treatment-card c-treatment">
+                    <h3>C型肝炎の治療</h3>
+                    <ul>
+                        <li>インターフェロンフリー治療</li>
+                        <li>8-12週間の内服</li>
+                        <li>副作用が少ない</li>
+                    </ul>
+                    <div class="success-rate">治癒率 95%以上</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スライド6: 予防対策 -->
+        <div class="slide slide-6" data-slide="6">
+            <h2>高齢者施設での感染予防対策</h2>
+            <div class="prevention-grid">
+                <div class="prevention-item">
+                    <div class="prevention-icon">🧤</div>
+                    <h4>手袋の着用</h4>
+                </div>
+                <div class="prevention-item">
+                    <div class="prevention-icon">🧼</div>
+                    <h4>手指衛生</h4>
+                </div>
+                <div class="prevention-item">
+                    <div class="prevention-icon">💉</div>
+                    <h4>針刺し防止</h4>
+                </div>
+                <div class="prevention-item">
+                    <div class="prevention-icon">🧽</div>
+                    <h4>血液汚染物の処理</h4>
+                </div>
+                <div class="prevention-item">
+                    <div class="prevention-icon">🚿</div>
+                    <h4>個人用品の管理</h4>
+                </div>
+                <div class="prevention-item">
+                    <div class="prevention-icon">📋</div>
+                    <h4>健康管理</h4>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スライド7: まとめ -->
+        <div class="slide slide-7" data-slide="7">
+            <h2>まとめ - 重要なポイント</h2>
+            <div class="summary-grid">
+                <div class="summary-card summary-1">
+                    <h3>早期発見</h3>
+                    <p>症状がなくても定期的な検査を</p>
+                </div>
+                <div class="summary-card summary-2">
+                    <h3>治療の進歩</h3>
+                    <p>C型は95%以上完治可能</p>
+                </div>
+                <div class="summary-card summary-3">
+                    <h3>感染予防</h3>
+                    <p>日常生活でのリスクは低い</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- コントロールパネル -->
+    <div class="controls">
+        <button onclick="previousSlide()">前へ</button>
+        <span class="slide-indicator">1 / 7</span>
+        <button onclick="nextSlide()">次へ</button>
+        <button onclick="goToSlide(1)">最初へ</button>
+        <button onclick="resetSlide()">リセット</button>
+    </div>
+    
+    <!-- デバッグ情報 -->
+    <div class="debug-info" id="debug">
+        <div>現在のスライド: <span id="debug-slide">1</span></div>
+        <div>最終更新: <span id="debug-time">-</span></div>
+    </div>
+    
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 7;
+        const STORAGE_KEY = 'hepatitis_slide_number';
+        
+        // ページ読み込み時に保存されたスライド番号を復元
+        window.addEventListener('load', () => {
+            // localStorageから読み込み
+            const savedSlide = localStorage.getItem(STORAGE_KEY);
+            if (savedSlide) {
+                currentSlide = parseInt(savedSlide);
+                console.log(`復元: スライド ${currentSlide}`);
+            }
+            
+            // URLパラメータも確認（優先度は低い）
+            const urlParams = new URLSearchParams(window.location.search);
+            const slideParam = urlParams.get('slide');
+            if (slideParam && !savedSlide) {
+                currentSlide = parseInt(slideParam);
+            }
+            
+            showSlide(currentSlide);
+            updateDebugInfo();
+        });
+        
+        // ページを離れる前に現在のスライドを保存
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem(STORAGE_KEY, currentSlide);
+        });
+        
+        function showSlide(n) {
+            console.log(`showSlide: ${n}`);
+            
+            const slides = document.querySelectorAll('.slide');
+            
+            // 範囲チェック
+            if (n > totalSlides) {
+                currentSlide = totalSlides;
+                return;
+            }
+            if (n < 1) {
+                currentSlide = 1;
+                return;
+            }
+            
+            currentSlide = n;
+            
+            // スライド表示を更新
+            slides.forEach(slide => slide.classList.remove('active'));
+            document.querySelector(`.slide-${currentSlide}`).classList.add('active');
+            
+            // インジケーター更新
+            document.querySelector('.slide-indicator').textContent = `${currentSlide} / ${totalSlides}`;
+            
+            // localStorage に保存
+            localStorage.setItem(STORAGE_KEY, currentSlide);
+            
+            // デバッグ情報更新
+            updateDebugInfo();
+        }
+        
+        function nextSlide() {
+            console.log('nextSlide clicked');
+            if (currentSlide < totalSlides) {
+                showSlide(currentSlide + 1);
+            }
+        }
+        
+        function previousSlide() {
+            console.log('previousSlide clicked');
+            if (currentSlide > 1) {
+                showSlide(currentSlide - 1);
+            }
+        }
+        
+        function goToSlide(n) {
+            console.log(`goToSlide: ${n}`);
+            showSlide(n);
+        }
+        
+        function resetSlide() {
+            console.log('resetSlide clicked');
+            localStorage.removeItem(STORAGE_KEY);
+            goToSlide(1);
+        }
+        
+        function updateDebugInfo() {
+            document.getElementById('debug-slide').textContent = currentSlide;
+            document.getElementById('debug-time').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // キーボードショートカット
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+            if (e.key >= '1' && e.key <= '7') goToSlide(parseInt(e.key));
+            if (e.key === 'r' || e.key === 'R') resetSlide();
+        });
+        
+        // 定期的にデバッグ情報を更新（問題の診断用）
+        setInterval(updateDebugInfo, 1000);
+    </script>
+</body>
+</html>
