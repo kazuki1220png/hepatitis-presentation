@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スーパーカートGP</title>
+<style>
+  html,body{margin:0;padding:0;background:#1a1a24;color:#eee;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    display:flex;flex-direction:column;align-items:center;min-height:100vh;justify-content:center}
+  h1{font-size:18px;letter-spacing:2px;margin:10px 0 6px;color:#ffd23f;text-shadow:2px 2px 0 #a03000}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;
+    width:min(96vw, 768px);aspect-ratio:256/224;background:#000;border:3px solid #444;border-radius:4px}
+  .help{font-size:12px;color:#aaa;margin:8px 4px 14px;text-align:center;line-height:1.7}
+  .help b{color:#ffd23f}
+</style>
+</head>
+<body>
+<h1>スーパーカートGP 〜 マッシュカップ 〜</h1>
+<canvas id="cv" width="256" height="224"></canvas>
+<div class="help">
+  <b>↑</b> アクセル ／ <b>↓</b> ブレーキ ／ <b>←→</b> ハンドル ／ <b>Shift か X</b> ダッシュキノコ ／ <b>M</b> サウンド切替<br>
+  3周してゴール！コインを取ると最高速アップ。芝・砂の上は減速します。
+</div>
+<script>
+"use strict";
+/* ================= 基本設定 ================= */
+const W=256, H=224, VIEW_H=112, HORIZON=40, GH=VIEW_H-HORIZON;   // 上画面
+const MAP=1024, ROADW=92;
+const VSCALE=2200, SCALEX=90, CAMBACK=34;
+const LAPS=3;
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+
+const TAU=Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const angNorm=a=>{a=(a+Math.PI)%TAU; if(a<0)a+=TAU; return a-Math.PI;};
+
+/* ================= コース（スプライン） ================= */
+const CP=[[190,860],[520,885],[760,860],[855,735],[820,600],[655,560],[430,595],[330,500],[400,400],[620,430],[800,385],[855,250],[720,150],[480,138],[260,170],[150,305],[140,600]];
+function cr(a,b,c,d,t){return b+0.5*t*(c-a+t*(2*a-5*b+4*c-d+t*(3*(b-c)+d-a)));}
+const WP=[];
+(function(){
+  const n=CP.length, seg=12;
+  for(let i=0;i<n;i++){
+    const p0=CP[(i-1+n)%n],p1=CP[i],p2=CP[(i+1)%n],p3=CP[(i+2)%n];
+    for(let t=0;t<seg;t++){const u=t/seg;
+      WP.push([cr(p0[0],p1[0],p2[0],p3[0],u), cr(p0[1],p1[1],p2[1],p3[1],u)]);}
+  }
+})();
+const NWP=WP.length;
+const wpTan=i=>{const a=WP[i],b=WP[(i+1)%NWP];return Math.atan2(b[1]-a[1],b[0]-a[0]);};
+
+/* ================= マップ（テクスチャ）生成 ================= */
+const mapC=document.createElement('canvas'); mapC.width=mapC.height=MAP;
+const mctx=mapC.getContext('2d');
+const maskC=document.createElement('canvas'); maskC.width=maskC.height=MAP;
+const kctx=maskC.getContext('2d');
+function trackPath(c){
+  c.beginPath(); c.moveTo(WP[0][0],WP[0][1]);
+  for(let i=1;i<NWP;i++)c.lineTo(WP[i][0],WP[i][1]);
+  c.closePath();
+}
+let roadMask;
+(function buildMap(){
+  // 砂地
+  mctx.fillStyle='#d8b168'; mctx.fillRect(0,0,MAP,MAP);
+  let s=12345; const rnd=()=> (s=(s*16807)%2147483647)/2147483647;
+  for(let i=0;i<9000;i++){
+    mctx.fillStyle=rnd()<0.5?'#c9a052':'#e3c47e';
+    mctx.fillRect(rnd()*MAP|0, rnd()*MAP|0, 3, 3);
+  }
+  // 縁石（赤白） → 道路
+  mctx.lineJoin='round'; mctx.lineCap='round';
+  trackPath(mctx);
+  mctx.strokeStyle='#d42818'; mctx.lineWidth=ROADW+18; mctx.stroke();
+  mctx.setLineDash([16,16]); mctx.strokeStyle='#f8f8f8'; mctx.stroke();
+  mctx.setLineDash([]);
+  mctx.strokeStyle='#9a9a9a'; mctx.lineWidth=ROADW; mctx.stroke();
+  // 走行可能マスク（縁石込み）
+  kctx.fillStyle='#000'; kctx.fillRect(0,0,MAP,MAP);
+  trackPath(kctx); kctx.lineJoin='round'; kctx.lineCap='round';
+  kctx.strokeStyle='#fff'; kctx.lineWidth=ROADW+18; kctx.stroke();
+  roadMask=kctx.getImageData(0,0,MAP,MAP).data;
+  // 路面の汚れ
+  for(let i=0;i<6000;i++){
+    const x=rnd()*MAP|0, y=rnd()*MAP|0;
+    if(roadMask[(y*MAP+x)*4]>128){
+      mctx.fillStyle=rnd()<0.5?'#8d8d8d':'#a6a6a6';
+      mctx.fillRect(x,y,2,2);
+    }
+  }
+  // スタートライン（市松模様）
+  const p=WP[0], a=wpTan(0);
+  mctx.save(); mctx.translate(p[0],p[1]); mctx.rotate(a);
+  const cell=7, cols=Math.ceil(ROADW/cell);
+  for(let r=0;r<2;r++)for(let c=0;c<cols;c++){
+    mctx.fillStyle=((r+c)&1)?'#111':'#f5f5f5';
+    mctx.fillRect(r*cell-cell, c*cell-ROADW/2, cell, cell);
+  }
+  mctx.restore();
+})();
+const mapData=mctx.getImageData(0,0,MAP,MAP).data;
+const onRoad=(x,y)=>{
+  if(x<0||y<0||x>=MAP||y>=MAP)return false;
+  return roadMask[(((y|0)*MAP+(x|0))<<2)]>128;
+};
+
+/* ================= 空（背景） ================= */
+const skyC=document.createElement('canvas'); skyC.width=256; skyC.height=HORIZON;
+(function(){
+  const c=skyC.getContext('2d');
+  const g=c.createLinearGradient(0,0,0,HORIZON);
+  g.addColorStop(0,'#69b0e8'); g.addColorStop(1,'#bfe0f6');
+  c.fillStyle=g; c.fillRect(0,0,256,HORIZON);
+  c.fillStyle='#3f7d3a';                       // 遠くの山
+  for(let i=0;i<7;i++){
+    const x=(i*47)%256, w=50+((i*37)%40), h=8+((i*23)%10);
+    c.beginPath(); c.ellipse(x,HORIZON,w,h,0,Math.PI,0); c.fill();
+  }
+  c.fillStyle='#fff';                          // 雲
+  for(let i=0;i<5;i++){
+    const x=(i*61+20)%256, y=6+(i*7)%14;
+    c.beginPath(); c.ellipse(x,y,11,4,0,0,TAU); c.ellipse(x+8,y+2,8,3,0,0,TAU); c.fill();
+  }
+})();
+
+/* ================= キャラクター ================= */
+const CHARS=[
+  {name:'レッド', type:'human',   body:'#e02818', sub:'#ffcf9e'},
+  {name:'ペン',   type:'penguin', body:'#2858d8', sub:'#f0f0f0'},
+  {name:'ケロ',   type:'frog',    body:'#38a828', sub:'#d8f0a0'},
+  {name:'ピヨ',   type:'chick',   body:'#f0c020', sub:'#ffffff'},
+  {name:'ミケ',   type:'cat',     body:'#9048c8', sub:'#f8e8f8'},
+];
+function makeFace(ch){
+  const c=document.createElement('canvas'); c.width=c.height=12;
+  const g=c.getContext('2d');
+  g.fillStyle=ch.body; g.beginPath(); g.arc(6,6,5.5,0,TAU); g.fill();
+  if(ch.type==='human'){
+    g.fillStyle=ch.sub; g.fillRect(2,6,8,5);
+    g.fillStyle='#fff'; g.fillRect(2,4,8,2);
+    g.fillStyle='#000'; g.fillRect(3,7,2,2); g.fillRect(7,7,2,2);
+  }else if(ch.type==='penguin'){
+    g.fillStyle='#fff'; g.beginPath(); g.arc(6,7,3.6,0,TAU); g.fill();
+    g.fillStyle='#000'; g.fillRect(3,5,2,2); g.fillRect(7,5,2,2);
+    g.fillStyle='#f0a020'; g.fillRect(5,8,2,2);
+  }else if(ch.type==='frog'){
+    g.fillStyle='#fff'; g.beginPath(); g.arc(4,3,2,0,TAU); g.arc(8,3,2,0,TAU); g.fill();
+    g.fillStyle='#000'; g.fillRect(3.5,2.5,1.5,1.5); g.fillRect(7.5,2.5,1.5,1.5);
+    g.fillStyle='#801818'; g.fillRect(3,8,6,1.5);
+  }else if(ch.type==='chick'){
+    g.fillStyle='#000'; g.fillRect(3,5,2,2); g.fillRect(7,5,2,2);
+    g.fillStyle='#f08020'; g.beginPath(); g.moveTo(4,8); g.lineTo(8,8); g.lineTo(6,10.5); g.fill();
+  }else{ // cat
+    g.fillStyle=ch.body; g.beginPath(); g.moveTo(1,4); g.lineTo(2,0); g.lineTo(5,3);
+    g.moveTo(11,4); g.lineTo(10,0); g.lineTo(7,3); g.fill();
+    g.fillStyle='#fff'; g.fillRect(3,5,2,2); g.fillRect(7,5,2,2);
+    g.fillStyle='#000'; g.fillRect(3.5,5.5,1,1.5); g.fillRect(7.5,5.5,1,1.5);
+    g.fillStyle='#f090a0'; g.fillRect(5.5,8,1.5,1.5);
+  }
+  return c;
+}
+function makeKart(ch,tilt){ // tilt: -1,0,1
+  const c=document.createElement('canvas'); c.width=28; c.height=22;
+  const g=c.getContext('2d');
+  g.translate(14,11); g.rotate(tilt*0.16); g.translate(-14,-11);
+  g.fillStyle='#181818';                        // 後輪
+  g.fillRect(1,12,6,9); g.fillRect(21,12,6,9);
+  g.fillStyle='#444'; g.fillRect(2.5,14,3,5); g.fillRect(22.5,14,3,5);
+  g.fillStyle=ch.body;                          // 車体
+  g.fillRect(6,11,16,8);
+  g.fillRect(8,8,12,4);
+  g.fillStyle='#222'; g.fillRect(9,17,10,3);    // バンパー
+  // ドライバー(頭)
+  g.drawImage(makeFace(ch),8,-1,12,12);
+  g.fillStyle=ch.body; g.fillRect(9,-2,10,3);   // ヘルメット上部
+  return c;
+}
+const KARTS_IMG=CHARS.map(ch=>[-1,0,1].map(t=>makeKart(ch,t)));
+const FACES=CHARS.map(makeFace);
+
+/* ================= コイン・アイテム ================= */
+const coins=[];
+for(let i=6;i<NWP;i+=14){
+  const a=wpTan(i), px=-Math.sin(a), py=Math.cos(a);
+  for(const off of [-22,0,22])
+    coins.push({x:WP[i][0]+px*off, y:WP[i][1]+py*off, taken:false});
+}
+
+/* ================= カート（プレイヤー & AI） ================= */
+function makeRacer(ci,gridPos){
+  const gi=NWP-6-gridPos*4;
+  const a=wpTan(gi), px=-Math.sin(a), py=Math.cos(a);
+  const lat=(gridPos%2?20:-20);
+  return {
+    ci, x:WP[gi][0]+px*lat, y:WP[gi][1]+py*lat, a, speed:0,
+    lap:0, idx:gi, prog:0, off:(Math.random()*30-15),
+    maxSp:138+ci*2.5+Math.random()*4, boost:0, finished:false, fTime:0,
+    isPlayer:false, coins:0,
+  };
+}
+const racers=[];
+for(let i=1;i<CHARS.length;i++)racers.push(makeRacer(i,i-1));
+const player=makeRacer(0,4); player.isPlayer=true;
+racers.push(player);
+player.mush=4;
+
+/* ================= 入力 ================= */
+const key={};
+addEventListener('keydown',e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+  key[e.key.toLowerCase()]=true;
+  if(e.key==='m'||e.key==='M')muted=!muted;
+  if((e.key==='Shift'||e.key.toLowerCase()==='x'))useMush();
+  initAudio();
+});
+addEventListener('keyup',e=>{key[e.key.toLowerCase()]=false;});
+
+/* ================= サウンド ================= */
+let AC=null, engOsc=null, engGain=null, muted=false;
+function initAudio(){
+  if(AC)return;
+  try{
+    AC=new (window.AudioContext||window.webkitAudioContext)();
+    engOsc=AC.createOscillator(); engOsc.type='sawtooth';
+    engGain=AC.createGain(); engGain.gain.value=0;
+    const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=700;
+    engOsc.connect(f); f.connect(engGain); engGain.connect(AC.destination);
+    engOsc.start();
+  }catch(e){}
+}
+function blip(freq,dur,type='square',vol=0.15){
+  if(!AC||muted)return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(vol,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(); o.stop(AC.currentTime+dur);
+}
+
+/* ================= レース状態 ================= */
+let state='ready', stateT=0, raceT=0;
+function useMush(){
+  if(state!=='race'||player.finished||player.mush<=0)return;
+  player.mush--; player.boost=1.1;
+  blip(300,0.35,'sawtooth',0.2); setTimeout(()=>blip(500,0.3,'sawtooth',0.15),120);
+}
+
+/* ================= 進行度・順位 ================= */
+function updateIdx(k){
+  let best=k.idx, bd=1e9;
+  for(let d=-8;d<=12;d++){
+    const i=(k.idx+d+NWP)%NWP;
+    const dx=WP[i][0]-k.x, dy=WP[i][1]-k.y, dist=dx*dx+dy*dy;
+    if(dist<bd){bd=dist; best=i;}
+  }
+  const prev=k.idx;
+  k.idx=best;
+  if(prev>NWP-16 && best<16){                 // ゴールライン通過
+    k.lap++;
+    if(k.isPlayer && !k.finished){
+      if(k.lap>LAPS){k.finished=true; k.fTime=raceT; state='finish'; stateT=0; blip(880,0.5,'square',0.2);}
+      else blip(660,0.25,'square',0.15);
+    }else if(k.lap>LAPS && !k.finished){k.finished=true; k.fTime=raceT;}
+  }else if(prev<16 && best>NWP-16){k.lap--;}  // 逆走で戻った
+  k.prog=k.lap*NWP+k.idx;
+}
+function ranking(){
+  return [...racers].sort((a,b)=>b.prog-a.prog);
+}
+
+/* ================= 物理更新 ================= */
+function drive(k,dt,throttle,brake,steer){
+  const boostOn=k.boost>0;
+  if(boostOn){k.boost-=dt; k.speed=Math.min(k.speed+400*dt,235);}
+  const topSp=(k.isPlayer?150+Math.min(k.coins,10)*1.4:k.maxSp)+(boostOn?85:0);
+  if(throttle&&k.speed<topSp)k.speed=Math.min(k.speed+140*dt,topSp);
+  else if(!throttle)k.speed=Math.max(k.speed-80*dt,0);
+  if(brake)k.speed=Math.max(k.speed-220*dt,0);
+  if(!onRoad(k.x,k.y)&&!boostOn&&k.speed>55)k.speed-=(k.speed-55)*3*dt;
+  const sf=clamp(k.speed/70,0,1);
+  k.a+=steer*2.6*sf*dt;
+  k.x+=Math.cos(k.a)*k.speed*dt;
+  k.y+=Math.sin(k.a)*k.speed*dt;
+  k.x=clamp(k.x,5,MAP-5); k.y=clamp(k.y,5,MAP-5);
+  updateIdx(k);
+}
+function aiControl(k,dt){
+  const look=(k.idx+7)%NWP;
+  const a2=wpTan(look), px2=-Math.sin(a2), py2=Math.cos(a2);
+  const tx=WP[look][0]+px2*k.off, ty=WP[look][1]+py2*k.off;
+  const desired=Math.atan2(ty-k.y,tx-k.x);
+  const da=angNorm(desired-k.a);
+  // ゴムバンド
+  const gap=player.prog-k.prog;
+  k.rb=clamp((gap)/60,-0.12,0.12);
+  const steer=clamp(da*4,-1,1);
+  drive(k,dt,true,false,steer);
+  k.speed=Math.min(k.speed,k.maxSp*(1+(k.finished?0: k.rb)));
+}
+function collide(){
+  for(let i=0;i<racers.length;i++)for(let j=i+1;j<racers.length;j++){
+    const a=racers[i],b=racers[j];
+    const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy;
+    if(d2<196&&d2>0.01){
+      const d=Math.sqrt(d2), push=(14-d)/2, nx=dx/d, ny=dy/d;
+      a.x-=nx*push; a.y-=ny*push; b.x+=nx*push; b.y+=ny*push;
+      if(a.isPlayer||b.isPlayer)blip(150,0.08,'square',0.08);
+    }
+  }
+}
+function pickCoins(){
+  for(const c of coins){
+    if(c.taken)continue;
+    const dx=c.x-player.x, dy=c.y-player.y;
+    if(dx*dx+dy*dy<130){c.taken=true; player.coins++; blip(990,0.12,'square',0.12); blip(1320,0.15,'square',0.1);}
+  }
+}
+
+/* ================= モード7描画 ================= */
+const ground=ctx.createImageData(W,GH);
+function renderMode7(cx,cy,ca){
+  const d=ground.data;
+  const sin=Math.sin(ca), cos=Math.cos(ca);
+  let i=0;
+  for(let sy=0;sy<GH;sy++){
+    const dist=VSCALE/(sy+1);
+    const rx=cx+cos*dist, ry=cy+sin*dist;
+    const step=dist/SCALEX;
+    const fog=sy<14?(14-sy)/26:0;
+    for(let sx=0;sx<W;sx++){
+      const off=(sx-128)*step;
+      const wx=rx-sin*off, wy=ry+cos*off;
+      let r,g,b;
+      if(wx<0||wy<0||wx>=MAP||wy>=MAP){
+        const ch=(((wx&2047)>>5)^((wy&2047)>>5))&1;
+        if(ch){r=64;g=158;b=52;}else{r=54;g=142;b=44;}
+      }else{
+        const mi=(((wy|0)*MAP+(wx|0))<<2);
+        r=mapData[mi]; g=mapData[mi+1]; b=mapData[mi+2];
+      }
+      if(fog>0){r+=(190-r)*fog; g+=(215-g)*fog; b+=(240-b)*fog;}
+      d[i++]=r; d[i++]=g; d[i++]=b; d[i++]=255;
+    }
+  }
+  ctx.putImageData(ground,0,HORIZON);
+}
+function project(wx,wy,cx,cy,sin,cos){
+  const dx=wx-cx, dy=wy-cy;
+  const fwd=dx*cos+dy*sin;
+  if(fwd<12)return null;
+  const side=-dx*sin+dy*cos;
+  const sy=HORIZON+VSCALE/fwd;
+  if(sy>VIEW_H+30)return null;
+  return {x:128+side*SCALEX/fwd, y:sy, f:fwd};
+}
+
+/* ================= HUD 部品 ================= */
+function fmtTime(t){
+  const m=Math.floor(t/60), s=Math.floor(t%60), c=Math.floor((t*100)%100);
+  return `${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"${String(c).padStart(2,'0')}`;
+}
+function outlineText(txt,x,y,font,fill,outline,align='left'){
+  ctx.font=font; ctx.textAlign=align; ctx.textBaseline='top';
+  ctx.fillStyle=outline;
+  for(const [ox,oy] of [[-1,0],[1,0],[0,-1],[0,1],[1,1],[-1,-1],[1,-1],[-1,1]])
+    ctx.fillText(txt,x+ox,y+oy);
+  ctx.fillStyle=fill; ctx.fillText(txt,x,y);
+}
+function drawCoinIcon(x,y){
+  ctx.fillStyle='#b88000'; ctx.beginPath(); ctx.ellipse(x+3.5,y+4,3.5,4,0,0,TAU); ctx.fill();
+  ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.ellipse(x+3,y+4,3,4,0,0,TAU); ctx.fill();
+  ctx.fillStyle='#b88000'; ctx.fillRect(x+2.2,y+2,1.6,4);
+}
+function drawMushIcon(x,y){
+  ctx.fillStyle='#e02818'; ctx.beginPath(); ctx.arc(x+4,y+3.5,4,Math.PI,0); ctx.fill();
+  ctx.fillRect(x,y+3.5,8,1.5);
+  ctx.fillStyle='#fff'; ctx.fillRect(x+1,y+1.5,2,2); ctx.fillRect(x+5,y+1.5,2,2);
+  ctx.fillRect(x+2.5,y+5,3,3);
+}
+
+/* ================= メイン描画 ================= */
+function draw(){
+  const ca=player.a;
+  const cx=player.x-Math.cos(ca)*CAMBACK, cy=player.y-Math.sin(ca)*CAMBACK;
+  const sin=Math.sin(ca), cos=Math.cos(ca);
+
+  // --- 空 ---
+  const pan=Math.floor((((ca/TAU)%1)+1)*256)%256;
+  ctx.drawImage(skyC,pan,0,256-pan,HORIZON,0,0,256-pan,HORIZON);
+  ctx.drawImage(skyC,0,0,pan,HORIZON,256-pan,0,pan,HORIZON);
+
+  // --- 地面(モード7) ---
+  renderMode7(cx,cy,ca);
+
+  // --- スプライト（奥→手前） ---
+  const spr=[];
+  for(const c of coins){
+    if(c.taken)continue;
+    const p=project(c.x,c.y,cx,cy,sin,cos);
+    if(p)spr.push({p,kind:'coin'});
+  }
+  for(const k of racers){
+    if(k.isPlayer)continue;
+    const p=project(k.x,k.y,cx,cy,sin,cos);
+    if(p)spr.push({p,kind:'kart',k});
+  }
+  spr.sort((a,b)=>b.p.f-a.p.f);
+  for(const s of spr){
+    const {p}=s;
+    if(s.kind==='coin'){
+      const w=Math.min(9*SCALEX/p.f,10);
+      if(w<1.5)continue;
+      const ph=Math.floor(raceT*8)%2;
+      ctx.fillStyle='#b88000'; ctx.beginPath(); ctx.ellipse(p.x,p.y-w*0.5,(ph?w*0.28:w*0.45)+0.6,w*0.55+0.6,0,0,TAU); ctx.fill();
+      ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.ellipse(p.x,p.y-w*0.5,ph?w*0.28:w*0.45,w*0.55,0,0,TAU); ctx.fill();
+    }else{
+      const k=s.k;
+      const w=clamp(17*SCALEX/p.f,3,66), h=w*0.78;
+      ctx.fillStyle='rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.ellipse(p.x,p.y,w*0.45,w*0.13,0,0,TAU); ctx.fill();
+      ctx.drawImage(KARTS_IMG[k.ci][1],p.x-w/2,p.y-h+w*0.1,w,h);
+    }
+  }
+
+  // --- プレイヤーカート ---
+  if(state!=='ready'||stateT>0.5){
+    const steer=(key['arrowleft']?-1:0)+(key['arrowright']?1:0);
+    const frame=player.finished?1:steer+1;
+    const bounce=player.speed>5?Math.sin(raceT*30)*0.7:0;
+    const px=128, py=103+bounce;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(px,py+1,19,5,0,0,TAU); ctx.fill();
+    ctx.drawImage(KARTS_IMG[0][frame],px-20,py-29,40,31);
+    if(player.boost>0){                       // ブースト炎
+      ctx.fillStyle=Math.floor(raceT*20)%2?'#ff8020':'#ffd23f';
+      ctx.beginPath(); ctx.ellipse(px-9,py+3,3,5,0,0,TAU); ctx.ellipse(px+9,py+3,3,5,0,0,TAU); ctx.fill();
+    }
+  }
+
+  /* --- 上画面HUD --- */
+  // タイマー
+  ctx.fillStyle='rgba(0,0,0,0.65)';
+  ctx.beginPath(); ctx.roundRect(146,3,106,15,4); ctx.fill();
+  outlineText(fmtTime(player.finished?player.fTime:raceT),152,6,'bold 11px "Courier New",monospace','#fff','#000');
+  // LAP表示
+  outlineText(`LAP ${clamp(player.lap,1,LAPS)}/${LAPS}`,146,22,'bold 9px "Courier New",monospace','#ffd23f','#000');
+  // アイテム＆コイン
+  drawMushIcon(196,58); outlineText(`×${player.mush}`,208,57,'bold 10px "Courier New",monospace','#fff','#000');
+  drawCoinIcon(196,71); outlineText(`×${String(player.coins).padStart(2,'0')}`,208,70,'bold 10px "Courier New",monospace','#ffd23f','#000');
+  // 現在順位（大きな数字）
+  const rank=ranking().indexOf(player)+1;
+  ctx.save(); ctx.translate(232,84); ctx.transform(1,0,-0.22,1,0,0);
+  outlineText(String(rank),0,0,'italic bold 26px sans-serif',
+    rank===1?'#ffd23f':rank===2?'#c8c8d8':rank===3?'#e08838':'#88c8f0','#503000','center');
+  ctx.restore();
+
+  const rk=ranking();
+
+  // カウントダウン
+  if(state==='ready'){
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.beginPath(); ctx.roundRect(103,34,50,18,4); ctx.fill();
+    const lit=Math.floor(stateT/0.9);
+    const cols=['#e02818','#f0c020','#38c828'];
+    for(let i=0;i<3;i++){
+      ctx.fillStyle=i<=lit-1?cols[i]:'#333';
+      ctx.beginPath(); ctx.arc(115+i*13,43,5,0,TAU); ctx.fill();
+    }
+    if(lit<1)outlineText('READY...',128,58,'bold 10px sans-serif','#fff','#000','center');
+  }
+  if(state==='race'&&raceT<1)outlineText('GO!!',128,52,'bold 20px sans-serif','#ffd23f','#a03000','center');
+  if(state==='finish'){
+    outlineText('FINISH!',128,40,'bold 20px sans-serif','#ffd23f','#a03000','center');
+    outlineText(`${rank}位  ${fmtTime(player.fTime)}`,128,64,'bold 12px sans-serif','#fff','#000','center');
+    if(Math.floor(stateT*2)%2)outlineText('Rでもう一回',128,82,'bold 9px sans-serif','#fff','#000','center');
+  }
+
+  /* --- 仕切り --- */
+  ctx.fillStyle='#000'; ctx.fillRect(0,VIEW_H,W,3);
+
+  /* --- 下画面：コース全体マップ --- */
+  ctx.fillStyle='#3a9b28'; ctx.fillRect(0,VIEW_H+3,W,H-VIEW_H-3);
+  ctx.fillStyle='#2f8320';
+  for(let y=0;y<H-VIEW_H;y+=8)for(let x=((y/8)%2)*8;x<W;x+=16)ctx.fillRect(x,VIEW_H+3+y,8,8);
+  const MX=16,MY=120,MW=224,MH=98;
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(MX+3,MY+4,MW,MH);   // 影
+  ctx.drawImage(mapC,MX,MY,MW,MH);
+  // コイン（残り）
+  for(const c of coins){
+    if(c.taken)continue;
+    ctx.fillStyle='#ffd23f';
+    ctx.fillRect(MX+c.x/MAP*MW-0.5,MY+c.y/MAP*MH-0.5,1.5,1.5);
+  }
+  // カート
+  for(const k of rk.slice().reverse()){
+    const x=MX+k.x/MAP*MW, y=MY+k.y/MAP*MH;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(x,y+2.5,3.5,1.2,0,0,TAU); ctx.fill();
+    ctx.drawImage(FACES[k.ci],x-4,y-5,9,9);
+    if(k.isPlayer){
+      ctx.strokeStyle=Math.floor(raceT*6)%2?'#fff':'#ffd23f';
+      ctx.lineWidth=1; ctx.strokeRect(x-5,y-6,11,11);
+    }
+  }
+  // ラベル（左下）
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.beginPath(); ctx.roundRect(2,H-16,110,13,3); ctx.fill();
+  outlineText('マッシュカップレース ›',7,H-13,'bold 8px sans-serif','#fff','#000');
+
+  // 順位表（左・両画面にまたがる）
+  for(let i=0;i<rk.length;i++){
+    const y=20+i*23;
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    ctx.beginPath(); ctx.roundRect(2,y,40,20,3); ctx.fill();
+    outlineText(String(i+1),6,y+4,'bold 12px "Courier New",monospace','#fff','#000');
+    ctx.drawImage(FACES[rk[i].ci],18,y+3,14,14);
+    if(rk[i].isPlayer){ctx.strokeStyle='#ffd23f'; ctx.lineWidth=1; ctx.strokeRect(2.5,y+0.5,39,19);}
+  }
+}
+
+/* ================= メインループ ================= */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min((now-last)/1000,0.05); last=now;
+  stateT+=dt;
+
+  if(state==='ready'){
+    if(stateT>2.7){state='race'; stateT=0; blip(880,0.4,'square',0.18);}
+    else if(stateT%0.9<dt&&stateT>0.5)blip(440,0.15,'square',0.12);
+  }
+  if(state==='race'||state==='finish'){
+    raceT+=dt;
+    for(const k of racers){
+      if(k.isPlayer&&!k.finished){
+        const th=key['arrowup']||key['z'], br=key['arrowdown'];
+        const st=(key['arrowleft']?-1:0)+(key['arrowright']?1:0);
+        drive(k,dt,th,br,st);
+      }else aiControl(k,dt);
+    }
+    collide();
+    pickCoins();
+  }
+  if(state==='finish'&&(key['r'])){location.reload();}
+
+  // エンジン音
+  if(engGain){
+    const target=(muted||player.speed<3)?0:0.035;
+    engGain.gain.value+=(target-engGain.gain.value)*0.2;
+    engOsc.frequency.value=55+player.speed*0.85+(player.boost>0?40:0);
+  }
+
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__kart={racers, player, get state(){return state}, get raceT(){return raceT}};
+</script>
+</body>
+</html>
