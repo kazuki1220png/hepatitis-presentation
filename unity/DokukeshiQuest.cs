@@ -31,6 +31,9 @@ public class DokukeshiQuest : MonoBehaviour
     public bool useGaiaTerrain = false;  // Gaiaで作った地形(Unity Terrain)の上を歩く
     public bool hideBoxTown = false;     // 箱の町(地面・家・木)を隠してGaia地形だけにする
 
+    [Header("草原マップをコードで生成 (Gaiaが無くても試せる)")]
+    public bool generateGrassland = false;  // 起伏のある草原(メッシュ)＋木・花を自動生成
+
     enum Field { Town, Cave }
     Field field = Field.Town;
 
@@ -49,7 +52,7 @@ public class DokukeshiQuest : MonoBehaviour
 
     readonly List<Vector4> townCols = new List<Vector4>(); // (x,z,hx,hz)
     readonly List<Vector4> caveCols = new List<Vector4>();
-    GameObject herbObj, npcMark;
+    GameObject herbObj, npcMark, groundMeshGO;
 
     // 場面転換
     bool transitioning = false;
@@ -95,6 +98,7 @@ public class DokukeshiQuest : MonoBehaviour
 
         townRoot = new GameObject("TownField").transform;
         caveRoot = new GameObject("CaveField").transform;
+        if (generateGrassland) { useGaiaTerrain = true; hideBoxTown = true; BuildGrassland(); }
         BuildTown();
         BuildCave();
         BuildPlayer();
@@ -266,13 +270,21 @@ public class DokukeshiQuest : MonoBehaviour
         return false;
     }
 
-    // Gaia地形(Unity Terrain)の高さを返す。町フィールドかつ設定ONのときだけ有効。
+    // 町フィールドの地面の高さを返す。Gaia地形(Terrain)があればそれを、
+    // 無ければ生成した草原メッシュにレイキャストして高さを取る。
     float GroundY(float x, float z)
     {
-        if (useGaiaTerrain && field == Field.Town)
+        if (field == Field.Town)
         {
             var ter = Terrain.activeTerrain;
-            if (ter != null) return ter.SampleHeight(new Vector3(x, 0, z)) + ter.transform.position.y;
+            if (useGaiaTerrain && ter != null)
+                return ter.SampleHeight(new Vector3(x, 0, z)) + ter.transform.position.y;
+            if (groundMeshGO != null)
+            {
+                RaycastHit hit;
+                if (Physics.Raycast(new Vector3(x, 100f, z), Vector3.down, out hit, 300f))
+                    return hit.point.y;
+            }
         }
         return 0f;
     }
@@ -418,6 +430,75 @@ public class DokukeshiQuest : MonoBehaviour
         Box(caveRoot, new Vector3(x, 1.0f, z), new Vector3(1.2f, 2.0f, 1.2f), H("#3a3742"));
         Box(caveRoot, new Vector3(x, 2.1f, z), new Vector3(0.6f, 1.4f, 0.6f), H("#332f3a"));
         caveCols.Add(new Vector4(x, z, 0.7f, 0.7f));
+    }
+
+    // 起伏のある草原メッシュを生成（Gaia無しで草原を試すため）
+    void BuildGrassland()
+    {
+        const int N = 64; const float size = 180f;
+        float sx = UnityEngine.Random.value * 50f, sz = UnityEngine.Random.value * 50f;
+        var verts = new Vector3[(N + 1) * (N + 1)];
+        var uv = new Vector2[verts.Length];
+        var tris = new int[N * N * 6];
+        for (int j = 0; j <= N; j++)
+            for (int i = 0; i <= N; i++)
+            {
+                float x = -size / 2f + size * i / N, z = -size / 2f + size * j / N;
+                float u = (float)i / N, v = (float)j / N;
+                float n = Mathf.PerlinNoise(sx + u * 4f, sz + v * 4f) * 0.6f
+                        + Mathf.PerlinNoise(sx + u * 9f, sz + v * 9f) * 0.25f;
+                float d = Mathf.Sqrt(x * x + z * z);
+                float flat = Mathf.Clamp01((d - 12f) / 28f);   // 中央(村)は平ら、外側ほど起伏
+                int k = j * (N + 1) + i;
+                verts[k] = new Vector3(x, n * 4.2f * flat, z);
+                uv[k] = new Vector2(u, v);
+            }
+        int t = 0;
+        for (int j = 0; j < N; j++)
+            for (int i = 0; i < N; i++)
+            {
+                int a = j * (N + 1) + i, b = a + 1, c = a + (N + 1), d2 = c + 1;
+                tris[t++] = a; tris[t++] = c; tris[t++] = b;
+                tris[t++] = b; tris[t++] = c; tris[t++] = d2;
+            }
+        var mesh = new Mesh();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.vertices = verts; mesh.uv = uv; mesh.triangles = tris;
+        mesh.RecalculateNormals(); mesh.RecalculateBounds();
+
+        groundMeshGO = new GameObject("Grassland");
+        groundMeshGO.transform.SetParent(townRoot, false);
+        groundMeshGO.AddComponent<MeshFilter>().mesh = mesh;
+        var mr = groundMeshGO.AddComponent<MeshRenderer>();
+        groundMeshGO.AddComponent<MeshCollider>().sharedMesh = mesh;
+        SetCol(groundMeshGO, H("#5a9e4a"), false);
+
+        ScatterProps();
+    }
+
+    // 草原に木と花をばらまく（地形の高さに沿って配置）
+    void ScatterProps()
+    {
+        var rng = new System.Random(2024);
+        for (int i = 0; i < 46; i++)
+        {
+            float x = (float)(rng.NextDouble() * 150 - 75);
+            float z = (float)(rng.NextDouble() * 150 - 75);
+            if (Mathf.Abs(x) < 6f && z > -34f && z < 36f) continue;       // 村・道を空ける
+            if (z < -30f && z > -46f && Mathf.Abs(x) < 12f) continue;     // 洞口を空ける
+            float gy = GroundY(x, z);
+            Box(townRoot, new Vector3(x, gy + 1.1f, z), new Vector3(0.5f, 2.2f, 0.5f), H("#6f5230"));
+            Box(townRoot, new Vector3(x, gy + 3.0f, z), new Vector3(2.4f, 2.2f, 2.4f), H("#4e8f4a"));
+            Box(townRoot, new Vector3(x, gy + 4.3f, z), new Vector3(1.5f, 1.6f, 1.5f), H("#5aa356"));
+        }
+        string[] fc = { "#ffd35c", "#ff7b9c", "#c9a0ff", "#ffffff" };
+        for (int i = 0; i < 70; i++)
+        {
+            float x = (float)(rng.NextDouble() * 150 - 75);
+            float z = (float)(rng.NextDouble() * 150 - 75);
+            float gy = GroundY(x, z);
+            Box(townRoot, new Vector3(x, gy + 0.2f, z), new Vector3(0.25f, 0.35f, 0.25f), H(fc[i % 4]), 0f, true);
+        }
     }
 
     void BuildPlayer()
