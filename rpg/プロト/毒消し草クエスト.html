@@ -13,81 +13,80 @@
   canvas{display:block;width:100%;height:100%}
 
   .hud{position:absolute;pointer-events:none;user-select:none}
-  /* Objective card */
   #objective{top:16px;left:16px;max-width:min(46vw,360px);background:var(--panel);
     border:1px solid var(--panel-edge);border-radius:14px;padding:12px 14px;
-    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
-    backdrop-filter:blur(6px)}
+    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(6px)}
   #objective .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);
     display:flex;align-items:center;gap:7px;margin-bottom:5px;font-weight:700}
-  #objective .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);
-    box-shadow:0 0 10px var(--accent)}
+  #objective .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
   #obj-text{font-size:15px;line-height:1.45;font-weight:600}
   #obj-sub{font-size:12px;color:var(--muted);margin-top:6px;display:flex;gap:6px;align-items:center}
   #compass{display:inline-block;transition:transform .12s linear;color:var(--accent-soft)}
 
-  /* Title banner */
   #title{top:14px;left:0;right:0;text-align:center}
   #title h1{font-family:var(--display);font-weight:600;font-size:clamp(18px,3.4vw,30px);margin:0;
     letter-spacing:.02em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
   #title h1 small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.35em;
     text-transform:uppercase;color:var(--accent-soft);margin-top:4px;font-weight:600}
 
-  /* Controls hint */
   #controls{bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:14px;flex-wrap:wrap;
-    justify-content:center;background:var(--panel);border:1px solid var(--panel-edge);
-    border-radius:999px;padding:8px 16px;font-size:12px;color:var(--muted)}
+    justify-content:center;background:var(--panel);border:1px solid var(--panel-edge);border-radius:999px;
+    padding:8px 16px;font-size:12px;color:var(--muted)}
   #controls b{color:var(--text)}
   kbd{font-family:var(--ui);background:#1d2837;border:1px solid #33475b;border-bottom-width:2px;
     border-radius:6px;padding:1px 7px;font-size:11px;color:#dbe9ee;margin:0 1px}
 
-  /* Reset button */
   #reset{top:16px;right:16px;pointer-events:auto;background:var(--panel);color:var(--text);
     border:1px solid var(--panel-edge);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;
     cursor:pointer;letter-spacing:.04em;transition:.15s}
   #reset:hover{border-color:var(--accent);color:var(--accent-soft)}
   #reset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Interaction prompt */
   #prompt{left:50%;bottom:74px;transform:translateX(-50%) translateY(8px);opacity:0;
     transition:opacity .18s, transform .18s;background:var(--panel);border:1px solid var(--accent);
-    border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;
-    box-shadow:0 0 24px rgba(79,227,196,.35)}
+    border-radius:999px;padding:9px 18px;font-weight:600;font-size:14px;box-shadow:0 0 24px rgba(79,227,196,.35)}
   #prompt.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #prompt .k{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;
     background:var(--accent);color:#062019;font-weight:800;margin-right:8px}
 
-  /* Toast */
   #toast{left:50%;top:30%;transform:translateX(-50%) scale(.9);opacity:0;transition:.3s;
     font-family:var(--display);font-size:clamp(22px,4vw,38px);color:var(--gold);font-weight:700;
     text-shadow:0 0 30px rgba(255,215,116,.5),0 3px 10px rgba(0,0,0,.6);text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) scale(1)}
 
-  /* Dialogue */
-  #dialogue{left:50%;bottom:8%;transform:translateX(-50%);width:min(90vw,620px);
-    background:var(--panel);border:1px solid var(--panel-edge);border-radius:16px;padding:18px 22px 16px;
-    box-shadow:0 18px 50px rgba(0,0,0,.55);backdrop-filter:blur(8px);display:none;pointer-events:auto}
+  /* Field banner (shown on entering a field) */
+  #field{left:0;right:0;top:40%;text-align:center;opacity:0;transition:opacity .4s}
+  #field.show{opacity:1}
+  #field .name{font-family:var(--display);font-size:clamp(26px,5vw,46px);font-weight:700;letter-spacing:.06em;
+    text-shadow:0 3px 20px rgba(0,0,0,.7)}
+  #field .sub{font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:var(--accent-soft);margin-top:6px}
+
+  #dialogue{left:50%;bottom:8%;transform:translateX(-50%);width:min(90vw,620px);background:var(--panel);
+    border:1px solid var(--panel-edge);border-radius:16px;padding:18px 22px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);
+    backdrop-filter:blur(8px);display:none;pointer-events:auto}
   #dialogue.show{display:block;animation:pop .22s ease-out}
   @keyframes pop{from{transform:translateX(-50%) translateY(10px);opacity:0}to{opacity:1}}
   #dlg-name{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px}
   #dlg-text{font-size:17px;line-height:1.6;min-height:2.6em}
   #dlg-next{margin-top:10px;text-align:right;font-size:12px;color:var(--muted)}
 
-  /* Complete banner */
-  #complete{inset:0;display:none;place-items:center;background:radial-gradient(ellipse at center,rgba(8,24,20,.4),rgba(6,9,14,.82));
-    pointer-events:auto}
+  #complete{inset:0;display:none;place-items:center;
+    background:radial-gradient(ellipse at center,rgba(8,24,20,.4),rgba(6,9,14,.82));pointer-events:auto}
   #complete.show{display:grid;animation:fade .5s}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   #complete .card{text-align:center;padding:8px}
   #complete .ribbon{font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);font-weight:700}
-  #complete h2{font-family:var(--display);font-size:clamp(30px,6vw,54px);margin:10px 0 6px;
-    color:var(--gold);text-shadow:0 0 40px rgba(255,215,116,.45)}
+  #complete h2{font-family:var(--display);font-size:clamp(30px,6vw,54px);margin:10px 0 6px;color:var(--gold);
+    text-shadow:0 0 40px rgba(255,215,116,.45)}
   #complete p{color:var(--muted);margin:0 0 22px;font-size:15px}
   #complete button{pointer-events:auto;background:var(--accent);color:#062019;border:0;border-radius:12px;
     padding:13px 30px;font-size:16px;font-weight:800;letter-spacing:.05em;cursor:pointer;
     box-shadow:0 0 30px rgba(79,227,196,.5);transition:.15s}
   #complete button:hover{transform:translateY(-2px)}
   #complete button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+  /* Field-transition fade */
+  #fade{position:absolute;inset:0;background:#05070c;opacity:0;pointer-events:none;transition:none}
 
   #err{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:24px;color:#ffbcbc}
 </style>
@@ -98,7 +97,7 @@
   <div id="title" class="hud"><h1>毒消し草クエスト<small>Herb of the Northern Cave</small></h1></div>
 
   <div id="objective" class="hud">
-    <div class="eyebrow">クエスト</div>
+    <div class="eyebrow"><span id="field-tag">エレンの村</span></div>
     <div id="obj-text">村人に話しかけよう</div>
     <div id="obj-sub"><span id="compass">▲</span><span id="dist">—</span></div>
   </div>
@@ -112,6 +111,7 @@
 
   <div id="prompt" class="hud"><span class="k">E</span><span id="prompt-text">話す</span></div>
   <div id="toast" class="hud"></div>
+  <div id="field" class="hud"><div class="name" id="field-name"></div><div class="sub" id="field-sub"></div></div>
 
   <div id="dialogue">
     <div id="dlg-name">村人</div>
@@ -128,277 +128,285 @@
     </div>
   </div>
 
+  <div id="fade"></div>
   <div id="err">WebGLを初期化できませんでした。別ブラウザ（Chrome / Edge / Safari）でお試しください。</div>
 </div>
 
 <script>
 (function(){
 "use strict";
-const cv = document.getElementById('c');
-const gl = cv.getContext('webgl') || cv.getContext('experimental-webgl');
-if(!gl){ document.getElementById('err').style.display='grid'; return; }
+const cv=document.getElementById('c');
+const gl=cv.getContext('webgl')||cv.getContext('experimental-webgl');
+if(!gl){document.getElementById('err').style.display='grid';return;}
 
 /* ---------- math ---------- */
-const V={
-  sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],
+const V={sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],
   cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
   dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
-  norm:(a)=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];}
-};
+  norm:a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];}};
 function mul(a,b){const o=new Float32Array(16);
   for(let r=0;r<4;r++)for(let c=0;c<4;c++)
     o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
   return o;}
 function perspective(f,a,n,fa){const t=1/Math.tan(f/2),nf=1/(n-fa);
-  return new Float32Array([t/a,0,0,0, 0,t,0,0, 0,0,(fa+n)*nf,-1, 0,0,2*fa*n*nf,0]);}
+  return new Float32Array([t/a,0,0,0,0,t,0,0,0,0,(fa+n)*nf,-1,0,0,2*fa*n*nf,0]);}
 function lookAt(e,c,u){const z=V.norm(V.sub(e,c)),x=V.norm(V.cross(u,z)),y=V.cross(z,x);
-  return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+  return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,
     -V.dot(x,e),-V.dot(y,e),-V.dot(z,e),1]);}
-const T=(x,y,z)=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1]);
-const S=(x,y,z)=>new Float32Array([x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1]);
-const Ry=(a)=>{const c=Math.cos(a),s=Math.sin(a);
-  return new Float32Array([c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]);};
+const Tm=(x,y,z)=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1]);
+const Sm=(x,y,z)=>new Float32Array([x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1]);
+const Rym=a=>{const c=Math.cos(a),s=Math.sin(a);return new Float32Array([c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]);};
 
 /* ---------- shaders ---------- */
-function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
   if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(s);return s;}
 const prog=gl.createProgram();
 gl.attachShader(prog,sh(gl.VERTEX_SHADER,`
-  attribute vec3 aPos; attribute vec3 aNormal;
-  uniform mat4 uModel,uVP;
-  varying vec3 vN,vW;
-  void main(){ vec4 w=uModel*vec4(aPos,1.0); vW=w.xyz; vN=mat3(uModel)*aNormal;
-    gl_Position=uVP*w; }`));
+  attribute vec3 aPos,aNormal; uniform mat4 uModel,uVP; varying vec3 vN,vW;
+  void main(){vec4 w=uModel*vec4(aPos,1.0);vW=w.xyz;vN=mat3(uModel)*aNormal;gl_Position=uVP*w;}`));
 gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,`
-  precision mediump float;
-  varying vec3 vN,vW;
-  uniform vec3 uColor,uCam,uFog; uniform float uEmit;
+  precision mediump float; varying vec3 vN,vW;
+  uniform vec3 uColor,uCam,uFog; uniform float uEmit,uAmb,uLit,uFogNear,uFogFar;
   const vec3 L=vec3(0.42,0.86,0.30);
   void main(){
     vec3 N=normalize(vN);
     float d=max(dot(N,L),0.0);
-    float light=0.42+0.72*d;
-    vec3 col=uColor*light + uColor*uEmit*1.4;
-    float fog=clamp((length(vW-uCam)-34.0)/60.0,0.0,1.0);
+    float light=uAmb+uLit*d;
+    vec3 col=uColor*light+uColor*uEmit*1.4;
+    float fog=clamp((length(vW-uCam)-uFogNear)/(uFogFar-uFogNear),0.0,1.0);
     col=mix(col,uFog,fog);
     gl_FragColor=vec4(col,1.0);
   }`));
 gl.linkProgram(prog);
 if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){document.getElementById('err').style.display='grid';return;}
 gl.useProgram(prog);
-const A_pos=gl.getAttribLocation(prog,'aPos'), A_nrm=gl.getAttribLocation(prog,'aNormal');
-const U_model=gl.getUniformLocation(prog,'uModel'), U_vp=gl.getUniformLocation(prog,'uVP'),
-      U_color=gl.getUniformLocation(prog,'uColor'), U_cam=gl.getUniformLocation(prog,'uCam'),
-      U_fog=gl.getUniformLocation(prog,'uFog'), U_emit=gl.getUniformLocation(prog,'uEmit');
+const A_pos=gl.getAttribLocation(prog,'aPos'),A_nrm=gl.getAttribLocation(prog,'aNormal');
+const U={model:gl.getUniformLocation(prog,'uModel'),vp:gl.getUniformLocation(prog,'uVP'),
+  color:gl.getUniformLocation(prog,'uColor'),cam:gl.getUniformLocation(prog,'uCam'),
+  fog:gl.getUniformLocation(prog,'uFog'),emit:gl.getUniformLocation(prog,'uEmit'),
+  amb:gl.getUniformLocation(prog,'uAmb'),lit:gl.getUniformLocation(prog,'uLit'),
+  fn:gl.getUniformLocation(prog,'uFogNear'),ff:gl.getUniformLocation(prog,'uFogFar')};
 
-/* ---------- cube geometry ---------- */
+/* ---------- cube ---------- */
 const faces=[
-  {n:[0,0,1], v:[[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]]},
+  {n:[0,0,1],v:[[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]]},
   {n:[0,0,-1],v:[[.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5]]},
-  {n:[1,0,0], v:[[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5]]},
+  {n:[1,0,0],v:[[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5]]},
   {n:[-1,0,0],v:[[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5]]},
-  {n:[0,1,0], v:[[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5]]},
-  {n:[0,-1,0],v:[[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5]]}
-];
-const pos=[],nrm=[],idx=[]; let vc=0;
-for(const f of faces){ for(const p of f.v){pos.push(...p);nrm.push(...f.n);}
-  idx.push(vc,vc+1,vc+2,vc,vc+2,vc+3); vc+=4; }
-function buf(data,arr){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arr),gl.STATIC_DRAW);return b;}
-const posB=buf(0,pos), nrmB=buf(0,nrm), idxB=gl.createBuffer();
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,idxB);
-gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(idx),gl.STATIC_DRAW);
-gl.bindBuffer(gl.ARRAY_BUFFER,posB);gl.enableVertexAttribArray(A_pos);gl.vertexAttribPointer(A_pos,3,gl.FLOAT,false,0,0);
-gl.bindBuffer(gl.ARRAY_BUFFER,nrmB);gl.enableVertexAttribArray(A_nrm);gl.vertexAttribPointer(A_nrm,3,gl.FLOAT,false,0,0);
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,idxB);
+  {n:[0,1,0],v:[[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5]]},
+  {n:[0,-1,0],v:[[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5]]}];
+const posA=[],nrmA=[],idxA=[];let vc=0;
+for(const f of faces){for(const p of f.v){posA.push(...p);nrmA.push(...f.n);}
+  idxA.push(vc,vc+1,vc+2,vc,vc+2,vc+3);vc+=4;}
+function vbuf(a){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(a),gl.STATIC_DRAW);return b;}
+const pB=vbuf(posA),nB=vbuf(nrmA),iB=gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iB);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(idxA),gl.STATIC_DRAW);
+gl.bindBuffer(gl.ARRAY_BUFFER,pB);gl.enableVertexAttribArray(A_pos);gl.vertexAttribPointer(A_pos,3,gl.FLOAT,false,0,0);
+gl.bindBuffer(gl.ARRAY_BUFFER,nB);gl.enableVertexAttribArray(A_nrm);gl.vertexAttribPointer(A_nrm,3,gl.FLOAT,false,0,0);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,iB);
 gl.enable(gl.DEPTH_TEST);
-const SKY=[0.62,0.80,0.90];
-
+const hex=h=>[parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255];
 function box(px,py,pz,sx,sy,sz,color,rotY,emit){
-  let m=T(px,py,pz);
-  if(rotY) m=mul(m,Ry(rotY));
-  m=mul(m,S(sx,sy,sz));
-  gl.uniformMatrix4fv(U_model,false,m);
-  gl.uniform3fv(U_color,color);
-  gl.uniform1f(U_emit,emit||0);
-  gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);
-}
+  let m=Tm(px,py,pz); if(rotY)m=mul(m,Rym(rotY)); m=mul(m,Sm(sx,sy,sz));
+  gl.uniformMatrix4fv(U.model,false,m);gl.uniform3fv(U.color,color);gl.uniform1f(U.emit,emit||0);
+  gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);}
 
-/* ---------- world ---------- */
-const HERB=[-2,-32], NPC=[3,34];       // [x,z] targets
-const colliders=[];
-function C(x,z,hx,hz){colliders.push({x,z,hx,hz});}
-// scenery definition (static draws)
-const houses=[
-  [-10,30,0.2,'#d9a066','#5b6b8a'],[10,32,0.5,'#c9b28a','#6b5b8a'],
-  [-14,22,-0.3,'#cf8b5c','#4f6b7a'],[13,24,0.4,'#d9c48a','#5b7a6b'],
-  [-8,16,0.1,'#c98f6a','#6b6b8a']
-];
-const trees=[[-18,10],[16,14],[-20,-2],[19,-4],[-6,2],[8,-8],[-16,-16],[15,-18],[-3,-20],[6,-24]];
-const rocks=[[-6,-30],[4,-29],[-9,-27],[7,-33],[2,-38]];
-function hex(h){return [parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255];}
+/* ---------- quest state ---------- */
+const state={q:0,herb:false};   // q:0 talk,1 get herb,2 return,3 done
+const P={x:0,z:24,yaw:Math.PI};
+const dist=(a,b)=>Math.hypot(P.x-a,P.z-b);
 
-// register colliders once
-houses.forEach(h=>C(h[0],h[1],2.4,2.4));
-trees.forEach(t=>C(t[0],t[1],0.5,0.5));
-C(0,-42,14,7);           // cave mountain
-rocks.forEach(r=>C(r[0],r[1],0.9,0.9));
-
-function drawWorld(t){
-  box(0,-0.15,-6,130,0.3,130,hex('#6cae5a'));                 // ground
-  // path town -> cave
-  for(let z=32;z>=-30;z-=4) box(0,0.02,z,5.2,0.05,4.2,hex('#d8c48f'));
-  box(0,0.02,-36,10,0.05,10,hex('#cbb27a'));                  // clearing before cave
-  // houses (body + roof)
-  for(const h of houses){ const[bx,bz,r,c1,c2]=h;
-    box(bx,1.6,bz,4,3.2,4,hex(c1),r); box(bx,3.6,bz,4.6,1.1,4.6,hex(c2),r); }
-  // well
+/* ================= FIELD: TOWN ================= */
+const NPC=[3,34], TOWN_GATE=[0,-30];
+const townHouses=[[-10,30,0.2,'#d9a066','#5b6b8a'],[10,32,0.5,'#c9b28a','#6b5b8a'],
+  [-14,22,-0.3,'#cf8b5c','#4f6b7a'],[13,24,0.4,'#d9c48a','#5b7a6b'],[-8,16,0.1,'#c98f6a','#6b6b8a']];
+const townTrees=[[-18,10],[16,14],[-20,-2],[19,-4],[-6,2],[8,-8],[-16,-16],[15,-18]];
+const townCol=[];
+townHouses.forEach(h=>townCol.push({x:h[0],z:h[1],hx:2.4,hz:2.4}));
+townTrees.forEach(t=>townCol.push({x:t[0],z:t[1],hx:0.5,hz:0.5}));
+townCol.push({x:-10,z:-42,hx:8,hz:7},{x:10,z:-42,hx:8,hz:7}); // cave face, gap in center for portal
+function drawTown(t){
+  box(0,-0.15,-6,160,0.3,160,hex('#6cae5a'));
+  for(let z=32;z>=-28;z-=4) box(0,0.02,z,5.2,0.05,4.2,hex('#d8c48f'));
+  for(const h of townHouses){const[bx,bz,r,c1,c2]=h;
+    box(bx,1.6,bz,4,3.2,4,hex(c1),r); box(bx,3.6,bz,4.6,1.1,4.6,hex(c2),r);}
   box(-2,0.5,26,1.6,1,1.6,hex('#8a8f99')); box(-2,1.4,26,0.2,0.9,1.6,hex('#6b5b4a'));
-  // trees
-  for(const [tx,tz] of trees){ box(tx,1.1,tz,0.5,2.2,0.5,hex('#7a5a3a')); box(tx,3.0,tz,2.4,2.2,2.4,hex('#4e8f4a')); box(tx,4.4,tz,1.5,1.6,1.5,hex('#5aa356')); }
-  // cave mountain + dark mouth
-  box(0,6,-42,28,14,14,hex('#4b4a56'));
-  box(0,9,-42,20,8,14,hex('#40404c'));
-  box(0,3.4,-34.2,7,6.8,2,hex('#0c0d12'));                     // entrance
-  box(0,3.4,-33,4.6,5.4,1,hex('#05060a'));                     // inner dark
-  // rocks near cave
-  for(const [rx,rz] of rocks) box(rx,0.7,rz,1.6,1.4,1.6,hex('#7c7f88'), (rx*rz)%1);
-  // herb (if not collected) — glowing
-  if(!state.herb){ const by=1.0+Math.sin(t*3)*0.18;
-    box(HERB[0],by,HERB[1],0.16,1.1,0.16,hex('#3e9a52'));
-    box(HERB[0],by+0.7,HERB[1],1.0,0.5,1.0,hex('#6cf08a'),t*1.5,0.9);
-    box(HERB[0],by+0.7,HERB[1],0.5,1.0,0.5,hex('#8ff0a0'),-t*1.2,0.9);
-  }
-  // NPC villager (body/head)
+  for(const[tx,tz]of townTrees){box(tx,1.1,tz,0.5,2.2,0.5,hex('#7a5a3a'));
+    box(tx,3.0,tz,2.4,2.2,2.4,hex('#4e8f4a')); box(tx,4.4,tz,1.5,1.6,1.5,hex('#5aa356'));}
+  // north cave-face with a portal opening (leads to cave field)
+  box(-11,7,-42,16,16,14,hex('#4b4a56')); box(11,7,-42,16,16,14,hex('#4b4a56'));
+  box(0,12,-42,10,8,14,hex('#40404c'));
+  box(0,3.6,-34,7,7.2,2,hex('#0a0b10'));            // dark portal
+  box(0,0.06,-31,5,0.04,3,hex('#3a4a55'),0,0.3);    // threshold glow
+  // NPC villager
   box(NPC[0],1.0,NPC[1],1.0,2.0,0.8,hex('#5a78c8')); box(NPC[0],2.5,NPC[1],0.9,0.9,0.9,hex('#e6c9a8'));
   box(NPC[0],3.05,NPC[1],1.0,0.35,1.0,hex('#3a4a7a'));
-  // '!' quest marker floats above NPC when actionable
-  if(state.q===0 || (state.q===2 && state.herb)){ const my=4.2+Math.sin(t*4)*0.15;
-    box(NPC[0],my,NPC[1],0.22,0.7,0.22,hex('#ffd774'),0,0.9); box(NPC[0],my-0.55,NPC[1],0.22,0.22,0.22,hex('#ffd774'),0,0.9); }
+  if(state.q===0||(state.q===2&&state.herb)){const my=4.2+Math.sin(t*4)*0.15;
+    box(NPC[0],my,NPC[1],0.22,0.7,0.22,hex('#ffd774'),0,0.9); box(NPC[0],my-0.55,NPC[1],0.22,0.22,0.22,hex('#ffd774'),0,0.9);}
 }
 
-/* ---------- player / camera ---------- */
-const P={x:0,z:24,yaw:Math.PI};   // start in town facing the villager (+z)
+/* ================= FIELD: CAVE ================= */
+const HERB=[0,-14], CAVE_EXIT=[0,12];
+const caveStals=[[-4,-4],[5,-8],[-6,-11],[4,2],[6,-14]];
+const caveCol=[{x:-11,z:-3,hx:1,hz:22},{x:11,z:-3,hx:1,hz:22},{x:0,z:-19,hx:12,hz:1},
+  {x:-8,z:13,hx:5,hz:1},{x:8,z:13,hx:5,hz:1}];
+caveStals.forEach(s=>caveCol.push({x:s[0],z:s[1],hx:0.7,hz:0.7}));
+function drawCave(t){
+  box(0,-0.15,-3,60,0.3,60,hex('#2a2730'));
+  box(-11,5,-3,2,12,44,hex('#211f28')); box(11,5,-3,2,12,44,hex('#211f28'));
+  box(0,5,-19,24,12,2,hex('#1c1a24'));
+  box(-8,5,13,10,12,2,hex('#211f28')); box(8,5,13,10,12,2,hex('#211f28'));
+  box(0,3.2,13.3,6,6.4,1.0,hex('#8fd4ff'),0,0.7);   // bright exit portal (to town)
+  // glowing crystals (light + waypoints)
+  const cr=[[-8,-6,'#59d0ff'],[7,-10,'#b98bff'],[-6,-15,'#59ffcf'],[8,3,'#ff9bd0'],[-9,6,'#8bd0ff']];
+  for(const[cx,cz,col]of cr){box(cx,1.2,cz,0.6,2.4,0.6,hex(col),(cx+cz)*0.3,0.9);
+    box(cx,2.5,cz,1.0,1.0,1.0,hex(col),(cx*cz)*0.2,0.9);}
+  for(const[sx,sz]of caveStals){box(sx,1.0,sz,1.2,2.0,1.2,hex('#3a3742')); box(sx,2.1,sz,0.6,1.4,0.6,hex('#332f3a'));}
+  if(!state.herb){const by=1.0+Math.sin(t*3)*0.18;
+    box(HERB[0],0.16,HERB[1],2.4,0.06,2.4,hex('#2f6b45'),0,0.4);
+    box(HERB[0],by,HERB[1],0.16,1.1,0.16,hex('#3e9a52'));
+    box(HERB[0],by+0.7,HERB[1],1.0,0.5,1.0,hex('#6cf08a'),t*1.5,1.0);
+    box(HERB[0],by+0.7,HERB[1],0.5,1.0,0.5,hex('#8ff0a0'),-t*1.2,1.0);}
+}
+
+const FIELDS={
+  town:{amb:0.42,lit:0.72,fog:[.62,.80,.90],fn:34,ff:95,col:townCol,draw:drawTown,name:'エレンの村',sub:'Ellen Village'},
+  cave:{amb:0.16,lit:0.22,fog:[.03,.04,.06],fn:8,ff:40,col:caveCol,draw:drawCave,name:'北の洞窟',sub:'Northern Cave'}
+};
+let fieldName='town';
+function collides(x,z){for(const c of FIELDS[fieldName].col){if(Math.abs(x-c.x)<c.hx+0.6&&Math.abs(z-c.z)<c.hz+0.6)return true;}return false;}
+
 function drawPlayer(){
-  const c=hex('#e8b04a');
-  box(P.x,1.05,P.z,1.0,2.1,0.7,c,P.yaw);                       // body
-  box(P.x,2.55,P.z,0.85,0.85,0.85,hex('#f0d0a8'),P.yaw);       // head
-  // little "cape"/pack for silhouette
-  const bx=P.x-Math.sin(P.yaw)*0.45, bz=P.z+Math.cos(P.yaw)*0.45;
+  box(P.x,1.05,P.z,1.0,2.1,0.7,hex('#e8b04a'),P.yaw);
+  box(P.x,2.55,P.z,0.85,0.85,0.85,hex('#f0d0a8'),P.yaw);
+  const bx=P.x-Math.sin(P.yaw)*0.45,bz=P.z+Math.cos(P.yaw)*0.45;
   box(bx,1.3,bz,0.8,1.4,0.25,hex('#3aa0c8'),P.yaw);
 }
 
-/* ---------- state ---------- */
-const state={q:0, herb:false};   // q:0 talk, 1 go herb, 2 return, 3 done
-const dist=(a,b)=>Math.hypot(P.x-a,P.z-b);
-function collides(x,z){for(const c of colliders){if(Math.abs(x-c.x)<c.hx+0.6&&Math.abs(z-c.z)<c.hz+0.6)return true;}return false;}
-
 /* ---------- input ---------- */
-const keys={}; let eEdge=false;
-addEventListener('keydown',e=>{ const k=e.key.toLowerCase();
+const keys={};let eEdge=false;
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();
   if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','e','r',' '].includes(k))e.preventDefault();
   if((k==='e'||k===' ')&&!keys._e)eEdge=true;
-  if(k==='e'||k===' ')keys._e=true; else keys[k]=true;
-  if(k==='r')reset();
-});
-addEventListener('keyup',e=>{const k=e.key.toLowerCase(); if(k==='e'||k===' ')keys._e=false; else keys[k]=false;});
+  if(k==='e'||k===' ')keys._e=true;else keys[k]=true;
+  if(k==='r')reset();});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='e'||k===' ')keys._e=false;else keys[k]=false;});
 
 /* ---------- UI ---------- */
-const ui={
-  obj:document.getElementById('obj-text'), dist:document.getElementById('dist'),
-  comp:document.getElementById('compass'), prompt:document.getElementById('prompt'),
-  ptxt:document.getElementById('prompt-text'), toast:document.getElementById('toast'),
-  dlg:document.getElementById('dialogue'), dtxt:document.getElementById('dlg-text'),
-  complete:document.getElementById('complete')
-};
+const ui={obj:document.getElementById('obj-text'),dist:document.getElementById('dist'),
+  comp:document.getElementById('compass'),prompt:document.getElementById('prompt'),
+  ptxt:document.getElementById('prompt-text'),toast:document.getElementById('toast'),
+  dlg:document.getElementById('dialogue'),dtxt:document.getElementById('dlg-text'),
+  complete:document.getElementById('complete'),tag:document.getElementById('field-tag'),
+  fname:document.getElementById('field-name'),fsub:document.getElementById('field-sub'),
+  fbanner:document.getElementById('field'),fade:document.getElementById('fade')};
 let toastTimer=null;
-function toast(msg){ui.toast.textContent=msg;ui.toast.classList.add('show');
+function toast(m){ui.toast.textContent=m;ui.toast.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>ui.toast.classList.remove('show'),1600);}
+let bannerTimer=null;
+function fieldBanner(){const f=FIELDS[fieldName];ui.fname.textContent=f.name;ui.fsub.textContent=f.sub;
+  ui.tag.textContent=f.name;ui.fbanner.classList.add('show');
+  clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>ui.fbanner.classList.remove('show'),1400);}
+
 let dlgLines=null,dlgI=0,dlgDone=null;
-function say(name,lines,done){ document.getElementById('dlg-name').textContent=name;
-  dlgLines=lines;dlgI=0;dlgDone=done||null;ui.dtxt.textContent=lines[0];ui.dlg.classList.add('show'); }
-function dlgAdvance(){ if(!dlgLines)return; dlgI++;
+function say(name,lines,done){document.getElementById('dlg-name').textContent=name;
+  dlgLines=lines;dlgI=0;dlgDone=done||null;ui.dtxt.textContent=lines[0];ui.dlg.classList.add('show');}
+function dlgAdvance(){if(!dlgLines)return;dlgI++;
   if(dlgI>=dlgLines.length){ui.dlg.classList.remove('show');const d=dlgDone;dlgLines=null;dlgDone=null;if(d)d();}
-  else ui.dtxt.textContent=dlgLines[dlgI]; }
-const OBJ={0:'村の入口にいる村人に話しかけよう',1:'北の洞窟へ行き「毒消し草」を採取しよう',
-  2:'毒消し草を持って村人のもとへ戻ろう',3:'クエスト達成！'};
+  else ui.dtxt.textContent=dlgLines[dlgI];}
+const OBJ={0:'村人マレンに話しかけよう',1:'北の洞窟へ入り「毒消し草」を採取しよう',
+  2:'毒消し草を持って村人マレンのもとへ戻ろう',3:'クエスト達成！'};
 function setObj(){ui.obj.textContent=OBJ[state.q];}
 
 function interact(){
   if(dlgLines){dlgAdvance();return;}
-  if(state.q===0 && dist(NPC[0],NPC[1])<3.6){
+  if(fieldName==='town'&&state.q===0&&dist(NPC[0],NPC[1])<3.6){
     say('村人 マレン',['旅の方、ちょうどよかった。','村の子が熱を出して、毒消し草がいるんだ。',
-      '北の洞窟に生えているはずだ。採ってきてくれないか？'],()=>{state.q=1;setObj();toast('クエスト受注');});
-  } else if(state.q===2 && state.herb && dist(NPC[0],NPC[1])<3.6){
+      '村の北にある洞窟に生えている。採ってきてくれないか？'],()=>{state.q=1;setObj();toast('クエスト受注');});
+  }else if(fieldName==='town'&&state.q===2&&state.herb&&dist(NPC[0],NPC[1])<3.6){
     say('村人 マレン',['おお、それが毒消し草か！','これで子どもも助かる。本当にありがとう。',
       '受け取ってくれ、ほんの礼だ。'],()=>{state.q=3;setObj();ui.complete.classList.add('show');});
   }
 }
+function currentTarget(){
+  if(fieldName==='town') return state.q>=2 ? NPC : TOWN_GATE;
+  return (state.q<=1&&!state.herb) ? HERB : CAVE_EXIT;
+}
+
+/* ---------- field transition ---------- */
+let trans=0,transT=0,transTo=null,transSpawn=null;
+function goField(name,spawn){if(trans)return;trans=1;transT=0;transTo=name;transSpawn=spawn;}
+function applySpawn(sp){P.x=sp[0];P.z=sp[1];P.yaw=sp[2];}
 
 /* ---------- loop ---------- */
 let last=0;
 function frame(now){
-  const t=now*0.001, dt=Math.min(0.05,(now-last)*0.001||0); last=now;
+  const t=now*0.001,dt=Math.min(0.05,(now-last)*0.001||0);last=now;
+  const busy=dlgLines||state.q===3||trans;
 
-  // input → movement (blocked during dialogue/complete)
-  const busy = dlgLines || state.q===3;
   if(!busy){
     const turn=2.2*dt;
     if(keys.a||keys.arrowleft)P.yaw-=turn;
     if(keys.d||keys.arrowright)P.yaw+=turn;
-    const spd=7.5*dt; let mv=0;
-    if(keys.w||keys.arrowup)mv=1; if(keys.s||keys.arrowdown)mv=-1;
-    if(mv){ const fx=Math.sin(P.yaw)*spd*mv, fz=-Math.cos(P.yaw)*spd*mv;
-      if(!collides(P.x+fx,P.z))P.x+=fx;
-      if(!collides(P.x,P.z+fz))P.z+=fz;
-      P.x=Math.max(-60,Math.min(60,P.x)); P.z=Math.max(-52,Math.min(58,P.z)); }
+    const spd=7.5*dt;let mv=0;
+    if(keys.w||keys.arrowup)mv=1;if(keys.s||keys.arrowdown)mv=-1;
+    if(mv){const fx=Math.sin(P.yaw)*spd*mv,fz=-Math.cos(P.yaw)*spd*mv;
+      if(!collides(P.x+fx,P.z))P.x+=fx; if(!collides(P.x,P.z+fz))P.z+=fz;}
+    // field-crossing triggers
+    if(fieldName==='town'&&P.z<-32&&Math.abs(P.x)<3.5) goField('cave',[0,10,0]);
+    else if(fieldName==='cave'&&P.z>11.5&&Math.abs(P.x)<3.5) goField('town',[0,-27,Math.PI]);
   }
   if(eEdge){eEdge=false;interact();}
 
-  // pickup herb
-  if(state.q===1 && !state.herb && dist(HERB[0],HERB[1])<2.4){
-    state.herb=true; state.q=2; setObj(); toast('毒消し草を手に入れた！');
-  }
+  // herb pickup (cave only)
+  if(fieldName==='cave'&&state.q===1&&!state.herb&&dist(HERB[0],HERB[1])<2.4){
+    state.herb=true;state.q=2;setObj();toast('毒消し草を手に入れた！');}
+
+  // transition fade
+  if(trans){transT+=dt;
+    if(trans===1){ui.fade.style.opacity=Math.min(1,transT/0.35);
+      if(transT>=0.35){fieldName=transTo;applySpawn(transSpawn);setObj();fieldBanner();trans=2;transT=0;}}
+    else{ui.fade.style.opacity=Math.max(0,1-transT/0.35);if(transT>=0.35){trans=0;ui.fade.style.opacity=0;}}}
 
   // prompt
   let pshow=false;
   if(!busy){
-    if(state.q===0 && dist(NPC[0],NPC[1])<3.6){ui.ptxt.textContent='マレンと話す';pshow=true;}
-    else if(state.q===2 && state.herb && dist(NPC[0],NPC[1])<3.6){ui.ptxt.textContent='毒消し草を渡す';pshow=true;}
+    if(fieldName==='town'&&state.q===0&&dist(NPC[0],NPC[1])<3.6){ui.ptxt.textContent='マレンと話す';pshow=true;}
+    else if(fieldName==='town'&&state.q===2&&state.herb&&dist(NPC[0],NPC[1])<3.6){ui.ptxt.textContent='毒消し草を渡す';pshow=true;}
   }
   ui.prompt.classList.toggle('show',pshow);
 
   // objective distance + compass
-  const tgt = state.q>=2 ? NPC : HERB;
   if(state.q===3){ui.dist.textContent='ありがとう！';ui.comp.style.opacity=0;}
-  else{ const d=dist(tgt[0],tgt[1]); ui.dist.textContent=d.toFixed(0)+' m';
-    ui.comp.style.opacity=1;
-    const ang=Math.atan2(tgt[0]-P.x, -(tgt[1]-P.z)) - P.yaw;
-    ui.comp.style.transform='rotate('+(ang*180/Math.PI)+'deg)'; }
+  else{const tg=currentTarget();const d=dist(tg[0],tg[1]);
+    ui.dist.textContent=d.toFixed(0)+' m';ui.comp.style.opacity=1;
+    const ang=Math.atan2(tg[0]-P.x,-(tg[1]-P.z))-P.yaw;
+    ui.comp.style.transform='rotate('+(ang*180/Math.PI)+'deg)';}
 
-  // camera (third person)
+  // camera + render
+  const f=FIELDS[fieldName];
   const fx=Math.sin(P.yaw),fz=-Math.cos(P.yaw);
-  const cam=[P.x-fx*9, 6.2, P.z-fz*9];
-  const vp=mul(perspective(1.02, cv.width/cv.height, 0.1, 260),
-               lookAt(cam,[P.x+fx*2,1.6,P.z+fz*2],[0,1,0]));
-  gl.uniformMatrix4fv(U_vp,false,vp);
-  gl.uniform3fv(U_cam,cam); gl.uniform3fv(U_fog,SKY);
-
-  gl.clearColor(SKY[0],SKY[1],SKY[2],1);
+  const cam=[P.x-fx*9,6.2,P.z-fz*9];
+  const vp=mul(perspective(1.02,cv.width/cv.height,0.1,300),lookAt(cam,[P.x+fx*2,1.6,P.z+fz*2],[0,1,0]));
+  gl.uniformMatrix4fv(U.vp,false,vp);
+  gl.uniform3fv(U.cam,cam);gl.uniform3fv(U.fog,f.fog);
+  gl.uniform1f(U.amb,f.amb);gl.uniform1f(U.lit,f.lit);gl.uniform1f(U.fn,f.fn);gl.uniform1f(U.ff,f.ff);
+  gl.clearColor(f.fog[0],f.fog[1],f.fog[2],1);
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  drawWorld(t); drawPlayer();
+  f.draw(t);drawPlayer();
   requestAnimationFrame(frame);
 }
 
 /* ---------- reset / resize ---------- */
-function reset(){ state.q=0;state.herb=false;P.x=0;P.z=24;P.yaw=Math.PI;
-  ui.complete.classList.remove('show');ui.dlg.classList.remove('show');dlgLines=null;setObj();toast('はじめから'); }
+function reset(){state.q=0;state.herb=false;fieldName='town';P.x=0;P.z=24;P.yaw=Math.PI;
+  trans=0;ui.fade.style.opacity=0;ui.complete.classList.remove('show');ui.dlg.classList.remove('show');
+  dlgLines=null;ui.tag.textContent=FIELDS.town.name;setObj();toast('はじめから');}
 document.getElementById('reset').onclick=reset;
 document.getElementById('again').onclick=reset;
-
 function resize(){const dpr=Math.min(2,devicePixelRatio||1);
   cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;gl.viewport(0,0,cv.width,cv.height);}
-addEventListener('resize',resize); resize(); setObj();
+addEventListener('resize',resize);resize();setObj();
 requestAnimationFrame(frame);
 })();
 </script>
