@@ -27,6 +27,10 @@ public class DokukeshiQuest : MonoBehaviour
     public GameObject npcModel;      // 村人マレン
     public GameObject herbModel;     // 毒消し草
 
+    [Header("Gaia地形を使う (任意)")]
+    public bool useGaiaTerrain = false;  // Gaiaで作った地形(Unity Terrain)の上を歩く
+    public bool hideBoxTown = false;     // 箱の町(地面・家・木)を隠してGaia地形だけにする
+
     enum Field { Town, Cave }
     Field field = Field.Town;
 
@@ -136,6 +140,13 @@ public class DokukeshiQuest : MonoBehaviour
 
         Vector3 fwd = new Vector3(Mathf.Sin(yaw), 0f, -Mathf.Cos(yaw));
         player.rotation = Quaternion.LookRotation(fwd, Vector3.up);
+
+        // Gaia地形の高さに追従（キャラを地形の上に乗せる）
+        {
+            Vector3 gp = player.position;
+            gp.y = GroundY(gp.x, gp.z);
+            player.position = gp;
+        }
 
         if (eEdge) { eEdge = false; Interact(); }
 
@@ -255,6 +266,17 @@ public class DokukeshiQuest : MonoBehaviour
         return false;
     }
 
+    // Gaia地形(Unity Terrain)の高さを返す。町フィールドかつ設定ONのときだけ有効。
+    float GroundY(float x, float z)
+    {
+        if (useGaiaTerrain && field == Field.Town)
+        {
+            var ter = Terrain.activeTerrain;
+            if (ter != null) return ter.SampleHeight(new Vector3(x, 0, z)) + ter.transform.position.y;
+        }
+        return 0f;
+    }
+
     // ---------------------------------------------------------  builders
     static Color H(string h)
     {
@@ -289,20 +311,23 @@ public class DokukeshiQuest : MonoBehaviour
 
     void BuildTown()
     {
-        Box(townRoot, new Vector3(0, -0.15f, -6), new Vector3(160, 0.3f, 160), H("#6cae5a"));
-        for (int z = 32; z >= -28; z -= 4)
-            Box(townRoot, new Vector3(0, 0.02f, z), new Vector3(5.2f, 0.05f, 4.2f), H("#d8c48f"));
+        if (!hideBoxTown)   // Gaia地形を使うときは箱の町を隠せる
+        {
+            Box(townRoot, new Vector3(0, -0.15f, -6), new Vector3(160, 0.3f, 160), H("#6cae5a"));
+            for (int z = 32; z >= -28; z -= 4)
+                Box(townRoot, new Vector3(0, 0.02f, z), new Vector3(5.2f, 0.05f, 4.2f), H("#d8c48f"));
 
-        AddHouse(-10, 30, 0.2f, "#d9a066", "#5b6b8a");
-        AddHouse(10, 32, 0.5f, "#c9b28a", "#6b5b8a");
-        AddHouse(-14, 22, -0.3f, "#cf8b5c", "#4f6b7a");
-        AddHouse(13, 24, 0.4f, "#d9c48a", "#5b7a6b");
-        AddHouse(-8, 16, 0.1f, "#c98f6a", "#6b6b8a");
+            AddHouse(-10, 30, 0.2f, "#d9a066", "#5b6b8a");
+            AddHouse(10, 32, 0.5f, "#c9b28a", "#6b5b8a");
+            AddHouse(-14, 22, -0.3f, "#cf8b5c", "#4f6b7a");
+            AddHouse(13, 24, 0.4f, "#d9c48a", "#5b7a6b");
+            AddHouse(-8, 16, 0.1f, "#c98f6a", "#6b6b8a");
 
-        Box(townRoot, new Vector3(-2, 0.5f, 26), new Vector3(1.6f, 1, 1.6f), H("#8a8f99"));
+            Box(townRoot, new Vector3(-2, 0.5f, 26), new Vector3(1.6f, 1, 1.6f), H("#8a8f99"));
 
-        AddTree(-18, 10); AddTree(16, 14); AddTree(-20, -2); AddTree(19, -4);
-        AddTree(-6, 2); AddTree(8, -8); AddTree(-16, -16); AddTree(15, -18);
+            AddTree(-18, 10); AddTree(16, 14); AddTree(-20, -2); AddTree(19, -4);
+            AddTree(-6, 2); AddTree(8, -8); AddTree(-16, -16); AddTree(15, -18);
+        }
 
         // 北の岩壁 + 洞口 (洞窟フィールドへの接続点)
         Box(townRoot, new Vector3(-11, 7, -42), new Vector3(16, 16, 14), H("#4b4a56"));
@@ -313,22 +338,23 @@ public class DokukeshiQuest : MonoBehaviour
         townCols.Add(new Vector4(-10, -42, 8, 7));
         townCols.Add(new Vector4(10, -42, 8, 7));
 
-        // NPC（Prefabがあれば差し替え）
+        // NPC（Prefabがあれば差し替え／Gaia地形なら地形の高さに乗せる）
+        float ny = GroundY(NPC.x, NPC.y);
         if (npcModel != null)
         {
             var v = Instantiate(npcModel, townRoot);
-            v.transform.position = new Vector3(NPC.x, 0f, NPC.y);
+            v.transform.position = new Vector3(NPC.x, ny, NPC.y);
         }
         else
         {
-            Box(townRoot, new Vector3(NPC.x, 1.0f, NPC.y), new Vector3(1.0f, 2.0f, 0.8f), H("#5a78c8"));
-            Box(townRoot, new Vector3(NPC.x, 2.5f, NPC.y), new Vector3(0.9f, 0.9f, 0.9f), H("#e6c9a8"));
-            Box(townRoot, new Vector3(NPC.x, 3.05f, NPC.y), new Vector3(1.0f, 0.35f, 1.0f), H("#3a4a7a"));
+            Box(townRoot, new Vector3(NPC.x, ny + 1.0f, NPC.y), new Vector3(1.0f, 2.0f, 0.8f), H("#5a78c8"));
+            Box(townRoot, new Vector3(NPC.x, ny + 2.5f, NPC.y), new Vector3(0.9f, 0.9f, 0.9f), H("#e6c9a8"));
+            Box(townRoot, new Vector3(NPC.x, ny + 3.05f, NPC.y), new Vector3(1.0f, 0.35f, 1.0f), H("#3a4a7a"));
         }
         npcMark = new GameObject("QuestMark");
         npcMark.transform.SetParent(townRoot, false);
-        Box(npcMark.transform, new Vector3(NPC.x, 4.4f, NPC.y), new Vector3(0.22f, 0.7f, 0.22f), H("#ffd774"), 0f, true);
-        Box(npcMark.transform, new Vector3(NPC.x, 3.85f, NPC.y), new Vector3(0.22f, 0.22f, 0.22f), H("#ffd774"), 0f, true);
+        Box(npcMark.transform, new Vector3(NPC.x, ny + 4.4f, NPC.y), new Vector3(0.22f, 0.7f, 0.22f), H("#ffd774"), 0f, true);
+        Box(npcMark.transform, new Vector3(NPC.x, ny + 3.85f, NPC.y), new Vector3(0.22f, 0.22f, 0.22f), H("#ffd774"), 0f, true);
     }
     void AddHouse(float x, float z, float r, string body, string roof)
     {
