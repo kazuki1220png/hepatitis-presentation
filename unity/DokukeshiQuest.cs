@@ -20,6 +20,13 @@ using UnityEngine;
 
 public class DokukeshiQuest : MonoBehaviour
 {
+    // ▼ 差し替え用（任意）: あなたのアセットのPrefabをInspectorでドラッグすると、
+    //   箱の代わりにそのモデルが同じ位置に置かれます。空なら箱の仮組みのまま。
+    [Header("キャラ・アイテム差し替え (任意)")]
+    public GameObject playerModel;   // 主人公（Meshyのリギング済みモデル等）
+    public GameObject npcModel;      // 村人マレン
+    public GameObject herbModel;     // 毒消し草
+
     enum Field { Town, Cave }
     Field field = Field.Town;
 
@@ -306,10 +313,18 @@ public class DokukeshiQuest : MonoBehaviour
         townCols.Add(new Vector4(-10, -42, 8, 7));
         townCols.Add(new Vector4(10, -42, 8, 7));
 
-        // NPC
-        Box(townRoot, new Vector3(NPC.x, 1.0f, NPC.y), new Vector3(1.0f, 2.0f, 0.8f), H("#5a78c8"));
-        Box(townRoot, new Vector3(NPC.x, 2.5f, NPC.y), new Vector3(0.9f, 0.9f, 0.9f), H("#e6c9a8"));
-        Box(townRoot, new Vector3(NPC.x, 3.05f, NPC.y), new Vector3(1.0f, 0.35f, 1.0f), H("#3a4a7a"));
+        // NPC（Prefabがあれば差し替え）
+        if (npcModel != null)
+        {
+            var v = Instantiate(npcModel, townRoot);
+            v.transform.position = new Vector3(NPC.x, 0f, NPC.y);
+        }
+        else
+        {
+            Box(townRoot, new Vector3(NPC.x, 1.0f, NPC.y), new Vector3(1.0f, 2.0f, 0.8f), H("#5a78c8"));
+            Box(townRoot, new Vector3(NPC.x, 2.5f, NPC.y), new Vector3(0.9f, 0.9f, 0.9f), H("#e6c9a8"));
+            Box(townRoot, new Vector3(NPC.x, 3.05f, NPC.y), new Vector3(1.0f, 0.35f, 1.0f), H("#3a4a7a"));
+        }
         npcMark = new GameObject("QuestMark");
         npcMark.transform.SetParent(townRoot, false);
         Box(npcMark.transform, new Vector3(NPC.x, 4.4f, NPC.y), new Vector3(0.22f, 0.7f, 0.22f), H("#ffd774"), 0f, true);
@@ -354,10 +369,18 @@ public class DokukeshiQuest : MonoBehaviour
         // 毒消し草 (発光)
         herbObj = new GameObject("Herb");
         herbObj.transform.SetParent(caveRoot, false);
-        Box(herbObj.transform, new Vector3(HERB.x, 0.16f, HERB.y), new Vector3(2.4f, 0.06f, 2.4f), H("#2f6b45"), 0f, true);
-        Box(herbObj.transform, new Vector3(HERB.x, 1.0f, HERB.y), new Vector3(0.16f, 1.1f, 0.16f), H("#3e9a52"));
-        Box(herbObj.transform, new Vector3(HERB.x, 1.7f, HERB.y), new Vector3(1.0f, 0.5f, 1.0f), H("#6cf08a"), 0f, true);
-        Box(herbObj.transform, new Vector3(HERB.x, 1.7f, HERB.y), new Vector3(0.5f, 1.0f, 0.5f), H("#8ff0a0"), 0.6f, true);
+        if (herbModel != null)
+        {
+            var v = Instantiate(herbModel, herbObj.transform);
+            v.transform.position = new Vector3(HERB.x, 0f, HERB.y);
+        }
+        else
+        {
+            Box(herbObj.transform, new Vector3(HERB.x, 0.16f, HERB.y), new Vector3(2.4f, 0.06f, 2.4f), H("#2f6b45"), 0f, true);
+            Box(herbObj.transform, new Vector3(HERB.x, 1.0f, HERB.y), new Vector3(0.16f, 1.1f, 0.16f), H("#3e9a52"));
+            Box(herbObj.transform, new Vector3(HERB.x, 1.7f, HERB.y), new Vector3(1.0f, 0.5f, 1.0f), H("#6cf08a"), 0f, true);
+            Box(herbObj.transform, new Vector3(HERB.x, 1.7f, HERB.y), new Vector3(0.5f, 1.0f, 0.5f), H("#8ff0a0"), 0.6f, true);
+        }
     }
     void AddCrystal(float x, float z, string col)
     {
@@ -375,6 +398,12 @@ public class DokukeshiQuest : MonoBehaviour
     {
         var pg = new GameObject("Player");
         player = pg.transform;
+        if (playerModel != null)
+        {
+            var v = Instantiate(playerModel, player);
+            v.transform.localPosition = Vector3.zero;
+            return;
+        }
         var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.transform.SetParent(player, false);
         body.transform.localPosition = new Vector3(0, 1.1f, 0);
