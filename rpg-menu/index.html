@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG メニュー画面</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  /* ===== 配色（ポートレートの紺背景・水色枠に合わせる） ===== */
+  :root{
+    --bg:#0b1230;          /* 画面全体の紺 */
+    --panel:#121a3f;       /* ウィンドウ内側 */
+    --frame:#9fb7e8;       /* 水色のベベル枠 */
+    --frame-dark:#3a4f8a;
+    --text:#f2f4ff;
+    --muted:#9aa6d1;
+    --gold:#f3c74f;
+    --hp:#5fd36b; --hp-bg:#27432b;
+    --mp:#5fa8ff; --mp-bg:#233a5e;
+    --cursor:#ffe066;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"DotGothic16",system-ui,sans-serif;
+    font-size:18px;
+    line-height:1.4;
+    image-rendering:pixelated;
+    display:flex;align-items:center;justify-content:center;
+    padding:16px;
+  }
+
+  /* ===== ドット絵風ウィンドウ ===== */
+  .win{
+    background:var(--panel);
+    border:4px solid var(--frame);
+    box-shadow:0 0 0 2px var(--frame-dark), inset 0 0 0 2px var(--frame-dark);
+    padding:12px 14px;
+    position:relative;
+  }
+  .win::before,.win::after{ /* 四隅の飾り */
+    content:"";position:absolute;width:8px;height:8px;background:var(--frame);
+  }
+  .win::before{top:-4px;left:-4px}
+  .win::after{bottom:-4px;right:-4px}
+
+  /* ===== 全体レイアウト ===== */
+  .screen{
+    width:min(960px,100%);
+    display:grid;
+    grid-template-columns:200px 1fr;
+    grid-template-rows:auto 1fr auto;
+    gap:12px;
+  }
+  .location{grid-column:1/3}
+  .commands{grid-row:2}
+  .party{grid-row:2}
+  .footer{grid-column:1/3;display:flex;justify-content:space-between;gap:12px}
+
+  /* ===== コマンド ===== */
+  .commands ul{list-style:none}
+  .commands li{
+    padding:6px 8px 6px 28px;position:relative;cursor:pointer;
+    color:var(--text);
+  }
+  .commands li.selected{color:var(--cursor)}
+  .commands li.selected::before{
+    content:"▶";position:absolute;left:6px;color:var(--cursor);
+    animation:blink 0.8s steps(2) infinite;
+  }
+  .commands li.disabled{color:var(--muted)}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ===== パーティ ===== */
+  .party{display:flex;flex-direction:column;gap:10px}
+  .member{
+    display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;
+    padding:8px;border:2px solid transparent;cursor:pointer;
+  }
+  .member.selected{border-color:var(--cursor);background:rgba(255,224,102,.06)}
+  .member img{
+    width:96px;height:96px;object-fit:cover;
+    border:3px solid var(--frame);box-shadow:0 0 0 2px var(--frame-dark);
+    background:#06091c;
+  }
+  .member .head{display:flex;justify-content:space-between;align-items:baseline}
+  .member .name{font-size:20px}
+  .member .job{color:var(--muted);font-size:14px;margin-left:8px}
+  .member .lv{color:var(--gold)}
+  .bar{display:grid;grid-template-columns:34px 1fr 90px;gap:8px;align-items:center;margin-top:4px;font-size:15px}
+  .bar .track{height:10px;border:2px solid var(--frame-dark);background:var(--hp-bg)}
+  .bar .fill{height:100%;background:var(--hp);width:0;transition:width .3s}
+  .bar.mp .track{background:var(--mp-bg)}
+  .bar.mp .fill{background:var(--mp)}
+  .bar .num{text-align:right;font-variant-numeric:tabular-nums}
+  .cond{font-size:14px;color:var(--muted)}
+  .cond.bad{color:#ff8a80}
+
+  /* ===== フッター ===== */
+  .footer .win{flex:1;display:flex;justify-content:space-between}
+  .gold{color:var(--gold)}
+
+  /* ===== ステータス詳細（サブ画面） ===== */
+  .detail{
+    position:fixed;inset:0;background:rgba(5,8,24,.85);
+    display:none;align-items:center;justify-content:center;padding:16px;
+  }
+  .detail.open{display:flex}
+  .detail .win{width:min(720px,100%);display:grid;grid-template-columns:200px 1fr;gap:16px}
+  .detail img{width:100%;aspect-ratio:1;object-fit:cover;border:3px solid var(--frame)}
+  .detail table{width:100%;border-collapse:collapse;font-size:17px}
+  .detail td{padding:3px 4px}
+  .detail td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .detail h2{font-size:24px;margin-bottom:6px}
+  .detail .equip{margin-top:10px;color:var(--muted);font-size:15px}
+  .hint{grid-column:1/3;text-align:right;color:var(--muted);font-size:14px}
+
+  .msg{grid-column:1/3;color:var(--muted);font-size:14px;text-align:center}
+
+  @media (max-width:640px){
+    .screen{grid-template-columns:1fr}
+    .location,.footer,.msg{grid-column:1}
+    .commands{grid-row:auto}.party{grid-row:auto}
+    .commands ul{display:flex;flex-wrap:wrap;gap:4px}
+    .commands li{padding:4px 8px 4px 22px}
+    .detail .win{grid-template-columns:1fr}
+    .hint{grid-column:1}
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="win location">現在地：<span id="place">王都アルヴェリア・城門前</span></div>
+
+  <!-- 左：コマンド一覧 -->
+  <nav class="win commands" aria-label="メニューコマンド">
+    <ul id="cmdList">
+      <li data-cmd="item">アイテム</li>
+      <li data-cmd="magic">魔法</li>
+      <li data-cmd="equip">装備</li>
+      <li data-cmd="status">ステータス</li>
+      <li data-cmd="order">隊列</li>
+      <li data-cmd="config">設定</li>
+      <li data-cmd="save">セーブ</li>
+    </ul>
+  </nav>
+
+  <!-- 右：パーティ一覧（JSで生成） -->
+  <section class="win party" id="party" aria-label="パーティ"></section>
+
+  <div class="footer">
+    <div class="win"><span>所持金</span><span class="gold" id="gold">0 G</span></div>
+    <div class="win"><span>プレイ時間</span><span id="time">00:00:00</span></div>
+  </div>
+  <div class="msg">↑↓ でコマンド選択 ／ Enter で決定 ／ ステータス選択後は ↑↓ でキャラ選択、Esc で戻る</div>
+</div>
+
+<!-- ステータス詳細 -->
+<div class="detail" id="detail">
+  <div class="win">
+    <img id="dImg" src="" alt="">
+    <div>
+      <h2><span id="dName"></span> <span class="job" id="dJob"></span></h2>
+      <table id="dTable"></table>
+      <div class="equip" id="dEquip"></div>
+    </div>
+    <div class="hint">Esc / Enter で戻る</div>
+  </div>
+</div>
+
+<script>
+// ===== パーティデータ =====
+// 画像は img/ に 3 人分。ここを書き換えればキャラが変わる。
+const party = [
+  { name:"リーゼ",   job:"神官",   img:"img/char1.png", lv:24, hp:[312,340], mp:[188,210],
+    cond:"正常", stats:{ちから:38, すばやさ:52, たいりょく:41, ちえ:77, せいしん:84, うん:60},
+    equip:{武器:"聖なる杖", 盾:"なし", 頭:"花の髪飾り", 体:"司祭のローブ", 装飾:"蒼玉のイヤリング"} },
+  { name:"ヴァルト", job:"剣士",   img:"img/char2.png", lv:26, hp:[455,480], mp:[42,60],
+    cond:"正常", stats:{ちから:81, すばやさ:63, たいりょく:72, ちえ:35, せいしん:44, うん:38},
+    equip:{武器:"竜殺しの剣", 盾:"騎士の盾", 頭:"なし", 体:"黒鋼の鎧", 装飾:"赤いマント"} },
+  { name:"フィン",   job:"風の使い", img:"img/char3.png", lv:22, hp:[198,260], mp:[131,150],
+    cond:"毒", stats:{ちから:44, すばやさ:88, たいりょく:46, ちえ:58, せいしん:50, うん:91},
+    equip:{武器:"疾風の短剣", 盾:"なし", 頭:"翼の髪飾り", 体:"旅人の上着", 装飾:"黄金の徽章"} },
+];
+const save = { gold:12480, seconds:5*3600+42*60+17 };
+
+// ===== 状態 =====
+let cmdIndex = 0;          // 選択中コマンド
+let mode = "command";      // "command" | "member" | "detail"
+let memberIndex = 0;
+const cmdItems = [...document.querySelectorAll("#cmdList li")];
+
+// ===== 描画 =====
+function renderParty(){
+  const el = document.getElementById("party");
+  el.innerHTML = party.map((p,i)=>`
+    <div class="member ${mode!=="command" && i===memberIndex ? "selected":""}" data-i="${i}">
+      <img src="${p.img}" alt="${p.name}">
+      <div>
+        <div class="head">
+          <span><span class="name">${p.name}</span><span class="job">${p.job}</span></span>
+          <span class="lv">Lv ${p.lv}</span>
+        </div>
+        ${bar("HP",p.hp,"hp")}
+        ${bar("MP",p.mp,"mp")}
+        <div class="cond ${p.cond!=="正常"?"bad":""}">状態：${p.cond}</div>
+      </div>
+    </div>`).join("");
+  // 描画後に幅を入れて、バーがアニメーションするようにする
+  requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
+}
+function bar(label,[cur,max],cls){
+  const pct = Math.round(cur/max*100);
+  return `<div class="bar ${cls}"><span>${label}</span>
+    <div class="track"><div class="fill" data-w="${pct}"></div></div>
+    <span class="num">${cur} / ${max}</span></div>`;
+}
+function renderCommands(){
+  cmdItems.forEach((li,i)=>li.classList.toggle("selected", i===cmdIndex && mode==="command"));
+}
+function renderFooter(){
+  document.getElementById("gold").textContent = save.gold.toLocaleString()+" G";
+  const s=save.seconds, h=String(Math.floor(s/3600)).padStart(2,"0"),
+        m=String(Math.floor(s%3600/60)).padStart(2,"0"), c=String(s%60).padStart(2,"0");
+  document.getElementById("time").textContent = `${h}:${m}:${c}`;
+}
+function openDetail(i){
+  const p = party[i];
+  document.getElementById("dImg").src = p.img;
+  document.getElementById("dName").textContent = p.name;
+  document.getElementById("dJob").textContent = p.job;
+  document.getElementById("dTable").innerHTML =
+    `<tr><td>Lv</td><td>${p.lv}</td></tr>
+     <tr><td>HP</td><td>${p.hp[0]} / ${p.hp[1]}</td></tr>
+     <tr><td>MP</td><td>${p.mp[0]} / ${p.mp[1]}</td></tr>` +
+    Object.entries(p.stats).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  document.getElementById("dEquip").innerHTML =
+    Object.entries(p.equip).map(([k,v])=>`${k}：${v}`).join("　");
+  document.getElementById("detail").classList.add("open");
+  mode = "detail";
+}
+function closeDetail(){
+  document.getElementById("detail").classList.remove("open");
+  mode = "member";
+  renderParty();
+}
+
+// ===== 決定処理 =====
+function decide(){
+  if(mode==="command"){
+    const cmd = cmdItems[cmdIndex].dataset.cmd;
+    if(cmd==="status" || cmd==="equip" || cmd==="magic"){
+      mode = "member"; memberIndex = 0; renderCommands(); renderParty();
+    }else{
+      flash(`「${cmdItems[cmdIndex].textContent}」は未実装です`);
+    }
+  }else if(mode==="member"){
+    openDetail(memberIndex);
+  }else if(mode==="detail"){
+    closeDetail();
+  }
+}
+function cancel(){
+  if(mode==="detail") closeDetail();
+  else if(mode==="member"){ mode="command"; renderCommands(); renderParty(); }
+}
+function flash(text){
+  const m = document.querySelector(".msg"); const old = m.textContent;
+  m.textContent = text; setTimeout(()=>m.textContent = old, 1200);
+}
+
+// ===== キー操作 =====
+document.addEventListener("keydown",e=>{
+  const k = e.key;
+  if(k==="ArrowUp"||k==="ArrowDown"){
+    e.preventDefault();
+    const d = k==="ArrowUp" ? -1 : 1;
+    if(mode==="command"){ cmdIndex=(cmdIndex+d+cmdItems.length)%cmdItems.length; renderCommands(); }
+    else if(mode==="member"){ memberIndex=(memberIndex+d+party.length)%party.length; renderParty(); }
+  }else if(k==="Enter"||k===" "||k==="z"){ e.preventDefault(); decide(); }
+  else if(k==="Escape"||k==="x"||k==="Backspace"){ e.preventDefault(); cancel(); }
+});
+
+// ===== マウス／タップ操作 =====
+cmdItems.forEach((li,i)=>li.addEventListener("click",()=>{ mode="command"; cmdIndex=i; renderCommands(); renderParty(); decide(); }));
+document.getElementById("party").addEventListener("click",e=>{
+  const m = e.target.closest(".member"); if(!m) return;
+  memberIndex = +m.dataset.i;
+  if(mode==="command"){ cmdIndex = cmdItems.findIndex(li=>li.dataset.cmd==="status"); mode="member"; renderCommands(); }
+  renderParty(); openDetail(memberIndex);
+});
+document.getElementById("detail").addEventListener("click",e=>{ if(e.target.id==="detail") closeDetail(); });
+
+// ===== プレイ時間カウント =====
+setInterval(()=>{ save.seconds++; renderFooter(); },1000);
+
+renderCommands(); renderParty(); renderFooter();
+</script>
+</body>
+</html>
